@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,15 +22,16 @@
  */
 package com.power.doc.model.rpc;
 
-import com.power.doc.model.JavaMethodDoc;
-
 import java.util.List;
 import java.util.Objects;
+
+import com.power.doc.model.RpcJavaMethod;
 
 /**
  * @author yu 2020/5/16.
  */
 public class RpcApiDoc implements Comparable<RpcApiDoc> {
+
     /**
      * Order of controller
      *
@@ -93,7 +94,7 @@ public class RpcApiDoc implements Comparable<RpcApiDoc> {
     /**
      * List of method doc
      */
-    private List<JavaMethodDoc> list;
+    private List<RpcJavaMethod> list;
 
     public int getOrder() {
         return order;
@@ -159,11 +160,11 @@ public class RpcApiDoc implements Comparable<RpcApiDoc> {
         this.version = version;
     }
 
-    public List<JavaMethodDoc> getList() {
+    public List<RpcJavaMethod> getList() {
         return list;
     }
 
-    public void setList(List<JavaMethodDoc> list) {
+    public void setList(List<RpcJavaMethod> list) {
         this.list = list;
     }
 

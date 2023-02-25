@@ -2,12 +2,13 @@
 # ${projectName}
 <%}%>
 <%if(isNotEmpty(revisionLogList)){%>
-Version |  Update Time  | Status | Author |  Description
----|---|---|---|---
+
+| Version | Update Time | Status | Author | Description |
+|---------|-------------|--------|--------|-------------|
 <%
 for(revisionLog in revisionLogList){
 %>
-${revisionLog.version}|${revisionLog.revisionTime}|${revisionLog.status}|${revisionLog.author}|${revisionLog.remarks}
+|${revisionLog.version}|${revisionLog.revisionTime}|${revisionLog.status}|${revisionLog.author}|${revisionLog.remarks}|
 <%}%>
 
 <%}%>
@@ -28,9 +29,9 @@ for(api in apiGroup.childrenApiDocs){
 for(doc in api.list){
 %>
 <%if(doc.deprecated){%>
-### ~~${doc.desc}~~
+### ~~${htmlEscape(doc.desc)}~~
 <%}else{%>
-### ${doc.desc}
+### ${htmlEscape(doc.desc)}
 <%}%>
 **URL:** ${doc.url}
 
@@ -47,44 +48,44 @@ for(doc in api.list){
 
 **Request-headers:**
 
-Header | Type|Description|Required|Since
----|---|---|---|----
+| Header | Type | Required | Description | Since |
+|--------|------|----------|-------------|-------|
 ${doc.headers}
 <%}%>
 <%if(isNotEmpty(doc.pathParams)){%>
 
 **Path-parameters:**
 
-Parameter | Type|Description|Required|Since
----|---|---|---|---
+| Parameter | Type | Required | Description | Since |
+|-----------|------|----------|-------------|-------|
 <%
 for(param in doc.pathParams){
 %>
-${param.field}|${param.type}|${param.desc}|${param.required}|${param.version}
+|${param.field}|${param.type}|${param.required}|${lineBreaksToBr(param.desc)}|${param.version}|
 <%}%>
 <%}%>
 <%if(isNotEmpty(doc.queryParams)){%>
 
 **Query-parameters:**
 
-Parameter | Type|Description|Required|Since
----|---|---|---|---
+| Parameter | Type | Required | Description | Since |
+|-----------|------|----------|-------------|-------|
 <%
 for(param in doc.queryParams){
 %>
-${param.field}|${param.type}|${param.desc}|${param.required}|${param.version}
+|${param.field}|${param.type}|${param.required}|${lineBreaksToBr(param.desc)}|${param.version}|
 <%}%>
 <%}%>
 <%if(isNotEmpty(doc.requestParams)){%>
 
 **Body-parameters:**
 
-Parameter | Type|Description|Required|Since
----|---|---|---|---
+| Parameter | Type | Required | Description | Since |
+|-----------|------|----------|-------------|-------|
 <%
 for(param in doc.requestParams){
 %>
-${param.field}|${param.type}|${param.desc}|${param.required}|${param.version}
+|${param.field}|${param.type}|${param.required}|${lineBreaksToBr(param.desc)}|${param.version}|
 <%}%>
 <%}%>
 
@@ -97,12 +98,12 @@ ${doc.requestUsage}
 <%if(isNotEmpty(doc.responseParams)){%>
 **Response-fields:**
 
-Field | Type|Description|Since
----|---|---|---
+| Field | Type | Description | Since |
+|-------|------|-------------|-------|
 <%
 for(param in doc.responseParams){
 %>
-${param.field}|${param.type}|${param.desc}|${param.version}
+|${param.field}|${param.type}|${lineBreaksToBr(param.desc)}|${param.version}|
 <%}%>
 <%}%>
 
@@ -122,12 +123,13 @@ ${doc.responseUsage}
 <% } else { %>
 # ${errorListTitle}
 <% } %>
-Error code |Description
----|---
+
+| Error code | Description |
+|------------|-------------|
 <%
 for(error in errorCodeList){
 %>
-${error.value}|${error.desc}
+|${error.value}|${htmlEscape(error.desc)}|
 <%}%>
 <%}%>
 
@@ -148,12 +150,12 @@ for(dict in dictList){
 ## ${dict.title}
 <% } %>
 
-Code |Type|Description
----|---|---
+| Code | Type | Description |
+|------|------|-------------|
 <%
 for(dataDict in dict.dataDictList){
 %>
-${dataDict.value}|${dataDict.type}|${dataDict.desc}
+|${dataDict.value}|${dataDict.type}|${htmlEscape(dataDict.desc)}|
 <%}%>
 <%}%>
 <%}%>

@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,6 +22,11 @@
  */
 package com.power.doc.builder;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 import com.power.common.util.CollectionUtil;
 import com.power.common.util.DateTimeUtil;
 import com.power.common.util.FileUtil;
@@ -40,12 +45,8 @@ import com.power.doc.template.IDocBuildTemplate;
 import com.power.doc.utils.BeetlTemplateUtil;
 import com.power.doc.utils.DocUtil;
 import com.thoughtworks.qdox.JavaProjectBuilder;
-import org.beetl.core.Template;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import org.beetl.core.Template;
 
 import static com.power.doc.constants.DocGlobalConstants.CSS_CDN;
 import static com.power.doc.constants.DocGlobalConstants.CSS_CDN_CH;
@@ -57,7 +58,7 @@ import static com.power.doc.constants.DocGlobalConstants.SEARCH_JS_OUT;
  */
 public class DocBuilderTemplate extends BaseDocBuilderTemplate {
 
-    private static long now = System.currentTimeMillis();
+    private static final long now = System.currentTimeMillis();
 
     /**
      * get all api data
@@ -72,7 +73,7 @@ public class DocBuilderTemplate extends BaseDocBuilderTemplate {
         apiAllData.setProjectId(DocUtil.generateId(config.getProjectName()));
         apiAllData.setLanguage(config.getLanguage().getCode());
         apiAllData.setApiDocList(listOfApiData(config, javaProjectBuilder));
-        apiAllData.setErrorCodeList(DocUtil.errorCodeDictToList(config));
+        apiAllData.setErrorCodeList(DocUtil.errorCodeDictToList(config, javaProjectBuilder));
         apiAllData.setRevisionLogs(config.getRevisionLogs());
         apiAllData.setApiDocDictList(DocUtil.buildDictionary(config, javaProjectBuilder));
         return apiAllData;
@@ -109,7 +110,7 @@ public class DocBuilderTemplate extends BaseDocBuilderTemplate {
      * @param outPutFileName     output file
      */
     public void buildAllInOne(List<ApiDoc> apiDocList, ApiConfig config, JavaProjectBuilder javaProjectBuilder,
-                              String template, String outPutFileName) {
+        String template, String outPutFileName) {
         buildDoc(apiDocList, config, javaProjectBuilder, template, outPutFileName, null, null);
     }
 
@@ -125,11 +126,11 @@ public class DocBuilderTemplate extends BaseDocBuilderTemplate {
      * @param index              index html
      */
     public void buildDoc(List<ApiDoc> apiDocList, ApiConfig config, JavaProjectBuilder javaProjectBuilder,
-                         String template, String outPutFileName, ApiDoc apiDoc, String index) {
+        String template, String outPutFileName, ApiDoc apiDoc, String index) {
         String outPath = config.getOutPath();
         String strTime = DateTimeUtil.long2Str(now, DateTimeUtil.DATE_FORMAT_SECOND);
         FileUtil.mkdirs(outPath);
-        List<ApiErrorCode> errorCodeList = DocUtil.errorCodeDictToList(config);
+        List<ApiErrorCode> errorCodeList = DocUtil.errorCodeDictToList(config, javaProjectBuilder);
         Template tpl = BeetlTemplateUtil.getByName(template);
         String style = config.getStyle();
         tpl.binding(TemplateVariable.STYLE.getVariable(), style);
@@ -180,7 +181,7 @@ public class DocBuilderTemplate extends BaseDocBuilderTemplate {
     }
 
     public void buildSearchJs(ApiConfig config, JavaProjectBuilder javaProjectBuilder, List<ApiDoc> apiDocList, String template) {
-        List<ApiErrorCode> errorCodeList = DocUtil.errorCodeDictToList(config);
+        List<ApiErrorCode> errorCodeList = DocUtil.errorCodeDictToList(config, javaProjectBuilder);
         Template tpl = BeetlTemplateUtil.getByName(template);
         // directory tree
         List<ApiDoc> apiDocs = new ArrayList<>();
@@ -196,9 +197,7 @@ public class DocBuilderTemplate extends BaseDocBuilderTemplate {
             ApiDoc apiDoc1 = new ApiDoc();
             int codeIndex = 0;
             if (isOnlyDefaultGroup) {
-                if (apiDocs.size() > 0) {
-                    codeIndex = apiDocs.get(0).getChildrenApiDocs().size();
-                }
+                codeIndex = apiDocs.get(0).getChildrenApiDocs().size();
             } else {
                 codeIndex = apiDocList.size();
             }
@@ -266,12 +265,13 @@ public class DocBuilderTemplate extends BaseDocBuilderTemplate {
     /**
      * build error_code adoc
      *
-     * @param config         api config
-     * @param template       template
-     * @param outPutFileName output file
+     * @param config             api config
+     * @param template           template
+     * @param outPutFileName     output file
+     * @param javaProjectBuilder javaProjectBuilder
      */
-    public void buildErrorCodeDoc(ApiConfig config, String template, String outPutFileName) {
-        List<ApiErrorCode> errorCodeList = DocUtil.errorCodeDictToList(config);
+    public void buildErrorCodeDoc(ApiConfig config, String template, String outPutFileName, JavaProjectBuilder javaProjectBuilder) {
+        List<ApiErrorCode> errorCodeList = DocUtil.errorCodeDictToList(config, javaProjectBuilder);
         String strTime = DateTimeUtil.long2Str(now, DateTimeUtil.DATE_FORMAT_SECOND);
         Template tpl = BeetlTemplateUtil.getByName(template);
         setCssCDN(config, tpl);
@@ -291,8 +291,8 @@ public class DocBuilderTemplate extends BaseDocBuilderTemplate {
      * @param indexAlias         index alias
      */
     public void buildErrorCodeDoc(ApiConfig config, JavaProjectBuilder javaProjectBuilder,
-                                  List<ApiDoc> apiDocList, String template, String outPutFileName, String indexAlias) {
-        List<ApiErrorCode> errorCodeList = DocUtil.errorCodeDictToList(config);
+        List<ApiDoc> apiDocList, String template, String outPutFileName, String indexAlias) {
+        List<ApiErrorCode> errorCodeList = DocUtil.errorCodeDictToList(config, javaProjectBuilder);
         String strTime = DateTimeUtil.long2Str(now, DateTimeUtil.DATE_FORMAT_SECOND);
         Template errorTemplate = BeetlTemplateUtil.getByName(template);
         errorTemplate.binding(TemplateVariable.PROJECT_NAME.getVariable(), config.getProjectName());
@@ -330,7 +330,7 @@ public class DocBuilderTemplate extends BaseDocBuilderTemplate {
      * @param indexAlias         index alias
      */
     public void buildDirectoryDataDoc(ApiConfig config, JavaProjectBuilder javaProjectBuilder, List<ApiDoc> apiDocList,
-                                      String template, String outPutFileName, String indexAlias) {
+        String template, String outPutFileName, String indexAlias) {
         List<ApiDocDict> directoryList = DocUtil.buildDictionary(config, javaProjectBuilder);
         Template mapper = BeetlTemplateUtil.getByName(template);
         String strTime = DateTimeUtil.long2Str(now, DateTimeUtil.DATE_FORMAT_SECOND);
@@ -338,7 +338,7 @@ public class DocBuilderTemplate extends BaseDocBuilderTemplate {
         String style = config.getStyle();
         mapper.binding(TemplateVariable.HIGH_LIGHT_CSS_LINK.getVariable(), config.getHighlightStyleLink());
         mapper.binding(TemplateVariable.STYLE.getVariable(), style);
-        List<ApiErrorCode> errorCodeList = DocUtil.errorCodeDictToList(config);
+        List<ApiErrorCode> errorCodeList = DocUtil.errorCodeDictToList(config, javaProjectBuilder);
         // set css cdn
         setCssCDN(config, mapper);
         if (DocLanguage.CHINESE.equals(config.getLanguage())) {
@@ -382,28 +382,6 @@ public class DocBuilderTemplate extends BaseDocBuilderTemplate {
         mapper.binding(TemplateVariable.DICT_LIST.getVariable(), directoryList);
         FileUtil.nioWriteFile(mapper.render(), config.getOutPath() + FILE_SEPARATOR + outPutFileName);
     }
-
-
-    /**
-     * Generate a single controller api document
-     *
-     * @param projectBuilder projectBuilder
-     * @param controllerName controller name
-     * @param template       template
-     * @param fileExtension  file extension
-     */
-    public void buildSingleApi(ProjectDocConfigBuilder projectBuilder, String controllerName, String template, String fileExtension) {
-        ApiConfig config = projectBuilder.getApiConfig();
-        FileUtil.mkdirs(config.getOutPath());
-        IDocBuildTemplate<ApiDoc> docBuildTemplate = BuildTemplateFactory.getDocBuildTemplate(config.getFramework());
-        ApiDoc doc = docBuildTemplate.getSingleApiData(projectBuilder, controllerName);
-        Template mapper = BeetlTemplateUtil.getByName(template);
-        mapper.binding(TemplateVariable.DESC.getVariable(), doc.getDesc());
-        mapper.binding(TemplateVariable.NAME.getVariable(), doc.getName());
-        mapper.binding(TemplateVariable.LIST.getVariable(), doc.getList());
-        FileUtil.writeFileNotAppend(mapper.render(), config.getOutPath() + FILE_SEPARATOR + doc.getName() + fileExtension);
-    }
-
 
     private List<ApiDoc> listOfApiData(ApiConfig config, JavaProjectBuilder javaProjectBuilder) {
         this.checkAndInitForGetApiData(config);

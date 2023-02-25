@@ -1,7 +1,7 @@
 /*
  * smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,13 +22,19 @@
  */
 package com.power.doc.utils;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Stack;
+
+import javax.annotation.Nonnull;
+
 import com.power.common.util.StringUtil;
 import com.power.doc.filter.ReturnTypeProcessor;
 import com.power.doc.model.ApiReturn;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import com.thoughtworks.qdox.model.JavaAnnotation;
+import com.thoughtworks.qdox.model.JavaClass;
 
 /**
  * Description:
@@ -135,7 +141,7 @@ public class DocClassUtil {
                 }
             }
         }
-        return classes.toArray(new String[classes.size()]);
+        return classes.toArray(new String[0]);
     }
 
     /**
@@ -182,19 +188,27 @@ public class DocClassUtil {
             case "java.lang.string":
             case "string":
             case "char":
+            case "java.util.date":
             case "date":
             case "java.util.uuid":
             case "uuid":
             case "localdatetime":
             case "java.time.localdatetime":
             case "java.time.localdate":
+            case "java.time.localtime":
+            case "java.time.year":
+            case "java.time.yearmonth":
+            case "java.time.monthday":
+            case "java.time.period":
             case "localdate":
             case "offsetdatetime":
             case "localtime":
             case "timestamp":
             case "zoneddatetime":
+            case "period":
             case "java.time.zoneddatetime":
             case "java.time.offsetdatetime":
+            case "java.sql.timestamp":
             case "java.lang.character":
             case "character":
             case "org.bson.types.objectid":
@@ -210,7 +224,7 @@ public class DocClassUtil {
             case "java.util.treeset":
             case "treeset":
                 return "array";
-            case "java.util.byte":
+            case "java.lang.byte":
             case "byte":
                 return "int8";
             case "java.lang.integer":
@@ -221,6 +235,7 @@ public class DocClassUtil {
             case "java.lang.short":
                 return "int16";
             case "double":
+            case "java.lang.double":
                 return "double";
             case "java.lang.long":
             case "long":
@@ -228,6 +243,7 @@ public class DocClassUtil {
             case "java.lang.float":
             case "float":
                 return "float";
+            case "java.math.bigdecimal":
             case "bigdecimal":
             case "biginteger":
                 return "number";
@@ -282,5 +298,34 @@ public class DocClassUtil {
             }
         }
         return stack.isEmpty();
+    }
+
+    /**
+     * Get class annotations
+     *
+     * @param cls JavaClass
+     * @return List of JavaAnnotation
+     */
+    public static List<JavaAnnotation> getAnnotations(JavaClass cls) {
+        JavaClass superClass = cls.getSuperJavaClass();
+        List<JavaAnnotation> classAnnotations = new ArrayList<>();
+        try {
+            if (Objects.nonNull(superClass)) {
+                classAnnotations.addAll(superClass.getAnnotations());
+            }
+        } catch (Throwable e) {
+            throw new RuntimeException("Could not obtain annotations for class: "+cls.getFullyQualifiedName()+"\n"+e);
+        }
+        classAnnotations.addAll(cls.getAnnotations());
+        return classAnnotations;
+    }
+
+    public static <T> T newInstance(@Nonnull Class<T> classWithNoArgsConstructor) {
+        try {
+            return classWithNoArgsConstructor.getConstructor().newInstance();
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException |
+                 InstantiationException e) {
+            throw new IllegalArgumentException("Class must have the NoArgsConstructor");
+        }
     }
 }

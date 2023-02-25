@@ -1,7 +1,7 @@
 /*
  * smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -24,6 +24,8 @@ package com.power.doc.model;
 
 import com.power.common.model.EnumDictionary;
 
+import java.util.Objects;
+
 /**
  * Description:
  * restful api error code
@@ -31,4 +33,22 @@ import com.power.common.model.EnumDictionary;
  * @author yu 2018/06/25.
  */
 public class ApiErrorCode extends EnumDictionary {
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getValue(), getType(), getDesc(), getOrdinal(), getName());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof ApiErrorCode)) {
+            return false;
+        }
+        ApiErrorCode other = (ApiErrorCode) obj;
+        return Objects.equals(getValue(), other.getValue()) &&
+                Objects.equals(getType(), other.getType()) &&
+                Objects.equals(getDesc(), other.getDesc()) &&
+                Objects.equals(getOrdinal(), other.getOrdinal()) &&
+                Objects.equals(getName(), other.getName());
+    }
 }

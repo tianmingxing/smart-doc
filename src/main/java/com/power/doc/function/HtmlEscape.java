@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -23,18 +23,21 @@
 package com.power.doc.function;
 
 import com.power.doc.utils.DocUtil;
+
 import org.beetl.core.Context;
 import org.beetl.core.Function;
 
 /**
+ * beetl template function
  * @author yu 2021/6/26.
  */
 public class HtmlEscape implements Function {
 
     @Override
     public String call(Object[] paras, Context ctx) {
-        String str = String.valueOf(paras[0]).replaceAll("\"","&quot;");
-        str = str.replaceAll("<p>","").replaceAll("</p>"," ");
-        return DocUtil.getEscapeAndCleanComment(str);
+        String str = String.valueOf(paras[0]).replaceAll("&", "&amp;");
+        str = str.replaceAll("\"", "&quot;");
+        str = str.replaceAll("<p>", "").replaceAll("</p>", " ");
+        return DocUtil.replaceNewLineToHtmlBr(DocUtil.getEscapeAndCleanComment(str));
     }
 }

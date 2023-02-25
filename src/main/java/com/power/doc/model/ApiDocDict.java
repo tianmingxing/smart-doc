@@ -1,7 +1,7 @@
 /*
  * smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -41,6 +41,11 @@ public class ApiDocDict {
     private String title;
 
     /**
+     * dict description
+     */
+    private String description;
+
+    /**
      * data dict
      */
     private List<DataDict> dataDictList;
@@ -69,15 +74,24 @@ public class ApiDocDict {
         this.dataDictList = dataDictList;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public ApiDocDict setDescription(String description) {
+        this.description = description;
+        return this;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("{");
         sb.append("\"order\":")
-                .append(order);
+            .append(order);
         sb.append(",\"title\":\"")
-                .append(title).append('\"');
+            .append(title).append('\"');
         sb.append(",\"dataDictList\":")
-                .append(dataDictList);
+            .append(dataDictList);
         sb.append('}');
         return sb.toString();
     }

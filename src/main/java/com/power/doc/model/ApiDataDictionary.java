@@ -1,7 +1,7 @@
 /*
  * smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,12 +22,15 @@
  */
 package com.power.doc.model;
 
-import com.power.common.model.EnumDictionary;
-import com.power.common.util.EnumUtil;
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+
+import com.power.common.model.EnumDictionary;
+import com.power.common.util.EnumUtil;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author yu 2019/10/31.
@@ -42,7 +45,13 @@ public class ApiDataDictionary {
     /**
      * enumClass
      */
-    private Class<? extends Enum> enumClass;
+    private Class<?> enumClass;
+
+    /**
+     * enum implements
+     * when enumClass is interface
+     */
+    private Set<Class<? extends Enum>> enumImplementSet;
 
     /**
      * enum class name
@@ -77,11 +86,20 @@ public class ApiDataDictionary {
         return enumClass;
     }
 
-    public ApiDataDictionary setEnumClass(Class enumClass) {
+    public ApiDataDictionary setEnumClass(Class<?> enumClass) {
         this.enumClass = enumClass;
-        if (StringUtils.isBlank(this.enumClassName)) {
+        if (StringUtils.isBlank(this.enumClassName) && Objects.nonNull(enumClass)) {
             this.enumClassName = enumClass.getSimpleName();
         }
+        return this;
+    }
+
+    public Set<Class<? extends Enum>> getEnumImplementSet() {
+        return enumImplementSet;
+    }
+
+    public ApiDataDictionary setEnumImplementSet(Set<Class<? extends Enum>> enumImplementSet) {
+        this.enumImplementSet = enumImplementSet;
         return this;
     }
 
@@ -112,10 +130,10 @@ public class ApiDataDictionary {
         return this;
     }
 
-    public List<EnumDictionary> getEnumDataDict() {
-        if (this.enumClass != null) {
-            return EnumUtil.getEnumInformation(this.enumClass, this.getCodeField(),
-                    this.getDescField());
+    public List<EnumDictionary> getEnumDataDict(Class enumClass) {
+        if (Objects.nonNull(enumClass)) {
+            return EnumUtil.getEnumInformation(enumClass, this.getCodeField(),
+                this.getDescField());
         } else {
             return new ArrayList<>();
         }
@@ -125,15 +143,15 @@ public class ApiDataDictionary {
     public String toString() {
         final StringBuilder sb = new StringBuilder("{");
         sb.append("\"title\":\"")
-                .append(title).append('\"');
+            .append(title).append('\"');
         sb.append(",\"enumClass\":")
-                .append(enumClass);
+            .append(enumClass);
         sb.append(",\"enumClassName\":\"")
-                .append(enumClassName).append('\"');
+            .append(enumClassName).append('\"');
         sb.append(",\"codeField\":\"")
-                .append(codeField).append('\"');
+            .append(codeField).append('\"');
         sb.append(",\"descField\":\"")
-                .append(descField).append('\"');
+            .append(descField).append('\"');
         sb.append('}');
         return sb.toString();
     }

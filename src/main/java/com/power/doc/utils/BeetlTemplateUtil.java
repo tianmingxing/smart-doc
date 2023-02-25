@@ -22,17 +22,18 @@
  */
 package com.power.doc.utils;
 
-import com.power.common.util.FileUtil;
-import org.beetl.core.Configuration;
-import org.beetl.core.GroupTemplate;
-import org.beetl.core.Template;
-import org.beetl.core.resource.ClasspathResourceLoader;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import com.power.common.util.FileUtil;
+
+import org.beetl.core.Configuration;
+import org.beetl.core.GroupTemplate;
+import org.beetl.core.Template;
+import org.beetl.core.resource.ClasspathResourceLoader;
 
 /**
  * Beetl template handle util
@@ -86,15 +87,14 @@ public class BeetlTemplateUtil {
     }
 
     /**
-     * @param path
-     * @return
+     * @param path file path
+     * @return group template
      */
     private static GroupTemplate getGroupTemplate(String path) {
         try {
             ClasspathResourceLoader resourceLoader = new ClasspathResourceLoader("/" + path + "/");
             Configuration cfg = Configuration.defaultConfiguration();
-            GroupTemplate gt = new GroupTemplate(resourceLoader, cfg);
-            return gt;
+            return new GroupTemplate(resourceLoader, cfg);
         } catch (IOException e) {
             throw new RuntimeException("Can't found Beetl template.");
         }

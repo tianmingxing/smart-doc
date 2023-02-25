@@ -1,7 +1,7 @@
 /*
  * smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,6 +22,8 @@
  */
 package com.power.doc.model;
 
+import java.util.Set;
+
 /**
  * @author yu 2019/12/7.
  * @since 1.7.9
@@ -31,12 +33,24 @@ public class ApiErrorCodeDictionary {
     /**
      * enumClass
      */
-    private Class<? extends Enum> enumClass;
+    private Class<?> enumClass;
+
+    /**
+     * enum implements
+     * when enumClass is interface
+     */
+    private Set<Class<? extends Enum>> enumImplementSet;
 
     /**
      * enum class name
      */
     private String enumClassName;
+
+    /**
+     * customized enum values resolver,
+     * class implement com.power.doc.extension.dict.DictionaryValuesResolver
+     */
+    private String valuesResolverClass;
     /**
      * code field
      */
@@ -62,6 +76,15 @@ public class ApiErrorCodeDictionary {
 
     public ApiErrorCodeDictionary setEnumClass(Class enumClass) {
         this.enumClass = enumClass;
+        return this;
+    }
+
+    public Set<Class<? extends Enum>> getEnumImplementSet() {
+        return enumImplementSet;
+    }
+
+    public ApiErrorCodeDictionary setEnumImplementSet(Set<Class<? extends Enum>> enumImplementSet) {
+        this.enumImplementSet = enumImplementSet;
         return this;
     }
 
@@ -92,17 +115,26 @@ public class ApiErrorCodeDictionary {
         return this;
     }
 
+    public String getValuesResolverClass() {
+        return this.valuesResolverClass;
+    }
+
+    public ApiErrorCodeDictionary setValuesResolverClass(String valuesResolverClass) {
+        this.valuesResolverClass = valuesResolverClass;
+        return this;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("{");
         sb.append("\"enumClass\":")
-                .append(enumClass);
+            .append(enumClass);
         sb.append(",\"enumClassName\":\"")
-                .append(enumClassName).append('\"');
+            .append(enumClassName).append('\"');
         sb.append(",\"codeField\":\"")
-                .append(codeField).append('\"');
+            .append(codeField).append('\"');
         sb.append(",\"descField\":\"")
-                .append(descField).append('\"');
+            .append(descField).append('\"');
         sb.append('}');
         return sb.toString();
     }

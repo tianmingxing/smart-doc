@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -26,6 +26,7 @@ package com.power.doc.model.torna;
  * @author xingzi 2021/2/25 12:29
  **/
 public class Item {
+
     /**
      * {
      * *                                 "name": "WAIT_PAY",
@@ -38,6 +39,16 @@ public class Item {
     private String type;
     private String value;
     private String description;
+
+    public Item() {
+    }
+
+    public Item(String name, String type, String value, String description) {
+        this.name = name;
+        this.type = type;
+        this.value = value;
+        this.description = description;
+    }
 
     public String getName() {
         return name;

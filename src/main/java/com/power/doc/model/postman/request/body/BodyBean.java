@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -23,14 +23,15 @@
 package com.power.doc.model.postman.request.body;
 
 
-import com.power.doc.model.FormData;
-
 import java.util.List;
+
+import com.power.doc.model.FormData;
 
 /**
  * @author xingzi
  */
 public class BodyBean {
+
     private String mode;
     private String raw;
     private List<FormData> formdata;
@@ -67,6 +68,7 @@ public class BodyBean {
     }
 
     private class BodyOptions {
+
         private Raw raw;
 
         public BodyOptions() {
@@ -74,6 +76,7 @@ public class BodyBean {
         }
 
         private class Raw {
+
             private String language;
 
             Raw() {

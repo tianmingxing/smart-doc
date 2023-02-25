@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -39,7 +39,7 @@ public enum SolonRequestAnnotationsEnum {
     REQUEST_HERDER("Header"),
     REQUEST_HERDER_FULLY("org.noear.solon.annotation.Header"),
     ;
-    private String value;
+    private final String value;
 
     SolonRequestAnnotationsEnum(String value) {
         this.value = value;

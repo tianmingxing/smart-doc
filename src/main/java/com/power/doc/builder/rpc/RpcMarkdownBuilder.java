@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,18 +22,18 @@
  */
 package com.power.doc.builder.rpc;
 
+import java.util.List;
+
 import com.power.common.util.DateTimeUtil;
-import com.power.doc.builder.ProjectDocConfigBuilder;
-import com.power.doc.factory.BuildTemplateFactory;
 import com.power.doc.helper.JavaProjectBuilderHelper;
 import com.power.doc.model.ApiConfig;
 import com.power.doc.model.rpc.RpcApiDoc;
-import com.power.doc.template.IDocBuildTemplate;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 
-import java.util.List;
-
-import static com.power.doc.constants.DocGlobalConstants.*;
+import static com.power.doc.constants.DocGlobalConstants.ERROR_CODE_LIST_MD;
+import static com.power.doc.constants.DocGlobalConstants.ERROR_CODE_LIST_MD_TPL;
+import static com.power.doc.constants.DocGlobalConstants.RPC_ALL_IN_ONE_MD_TPL;
+import static com.power.doc.constants.DocGlobalConstants.RPC_API_DOC_MD_TPL;
 
 /**
  * @author yu 2020/5/16.
@@ -60,19 +60,15 @@ public class RpcMarkdownBuilder {
      */
     public static void buildApiDoc(ApiConfig apiConfig, JavaProjectBuilder javaProjectBuilder) {
         apiConfig.setAdoc(false);
-        apiConfig.setShowJavaType(true);
         RpcDocBuilderTemplate builderTemplate = new RpcDocBuilderTemplate();
-        builderTemplate.checkAndInit(apiConfig);
-        ProjectDocConfigBuilder configBuilder = new ProjectDocConfigBuilder(apiConfig, javaProjectBuilder);
-        IDocBuildTemplate docBuildTemplate = BuildTemplateFactory.getDocBuildTemplate(apiConfig.getFramework());
-        List<RpcApiDoc> apiDocList = docBuildTemplate.getApiData(configBuilder);
+        List<RpcApiDoc> apiDocList = builderTemplate.getRpcApiDoc(apiConfig, javaProjectBuilder);
         if (apiConfig.isAllInOne()) {
             String version = apiConfig.isCoverOld() ? "" : "-V" + DateTimeUtil.long2Str(System.currentTimeMillis(), DATE_FORMAT);
             String docName = builderTemplate.allInOneDocName(apiConfig, "rpc-all" + version, ".md");
             builderTemplate.buildAllInOne(apiDocList, apiConfig, javaProjectBuilder, RPC_ALL_IN_ONE_MD_TPL, docName);
         } else {
             builderTemplate.buildApiDoc(apiDocList, apiConfig, RPC_API_DOC_MD_TPL, API_EXTENSION);
-            builderTemplate.buildErrorCodeDoc(apiConfig, ERROR_CODE_LIST_MD_TPL, ERROR_CODE_LIST_MD);
+            builderTemplate.buildErrorCodeDoc(apiConfig, ERROR_CODE_LIST_MD_TPL, ERROR_CODE_LIST_MD, javaProjectBuilder);
         }
     }
 }

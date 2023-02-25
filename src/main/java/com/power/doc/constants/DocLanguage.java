@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -31,7 +31,7 @@ public enum DocLanguage {
     ENGLISH("en-US"),
     CHINESE("zh-CN");
 
-    public String code;
+    public final String code;
 
     DocLanguage(String code) {
         this.code = code;

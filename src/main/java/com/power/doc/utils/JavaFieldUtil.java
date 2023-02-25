@@ -1,7 +1,7 @@
 /*
  * smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,16 +22,18 @@
  */
 package com.power.doc.utils;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 import com.power.common.util.StringUtil;
 import com.power.doc.constants.DocAnnotationConstants;
+import com.power.doc.constants.DocGlobalConstants;
+import com.power.doc.constants.DocValidatorAnnotationEnum;
 import com.power.doc.model.CustomField;
 import com.power.doc.model.DocJavaField;
 import com.thoughtworks.qdox.model.JavaAnnotation;
 import com.thoughtworks.qdox.model.expression.AnnotationValue;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author yu 2019/12/21.
@@ -72,7 +74,7 @@ public class JavaFieldUtil {
      * @param paramName      参数名称
      * @param typeName       参数数据类型
      * @param simpleTypeName 参数简单数据类型
-     * @return
+     * @return mock value
      */
     public static String createMockValue(Map<String, String> paramsComments, String paramName, String typeName, String simpleTypeName) {
         String mockValue = "";
@@ -91,11 +93,10 @@ public class JavaFieldUtil {
     }
 
     /**
-     *
      * @param annotations annotation
-     * @return
+     * @return max length
      */
-    public static String getParamMaxlength(List<JavaAnnotation> annotations){
+    public static String getParamMaxLength(List<JavaAnnotation> annotations) {
         String maxLength = "";
         for (JavaAnnotation annotation : annotations) {
             String simpleAnnotationName = annotation.getType().getValue();
@@ -115,4 +116,46 @@ public class JavaFieldUtil {
         }
         return maxLength;
     }
+
+    /**
+     * getJsr303Comment
+     *
+     * @param annotations annotations
+     * @return Jsr comments
+     */
+    public static String getJsrComment(List<JavaAnnotation> annotations) {
+        StringBuilder sb = new StringBuilder();
+        for (JavaAnnotation annotation : annotations) {
+            Map<String, AnnotationValue> values = annotation.getPropertyMap();
+            String name = annotation.getType().getValue();
+            if (DocValidatorAnnotationEnum.listValidatorAnnotations().contains(name)) {
+                for (Map.Entry<String, AnnotationValue> m : values.entrySet()) {
+                    String value = DocUtil.resolveAnnotationValue(m.getValue());
+                    if (DocAnnotationConstants.REGEXP.equals(m.getKey())) {
+                        sb.append(m.getKey()).append(": ").append(StringUtil.removeDoubleQuotes(value))
+                            .append("; ");
+                    }
+                    if (DocAnnotationConstants.MAX.equals(m.getKey())) {
+                        sb.append(m.getKey()).append(": ").append(StringUtil.removeDoubleQuotes(value))
+                            .append("; ");
+                    }
+                    if (DocAnnotationConstants.LENGTH.equals(m.getKey())) {
+                        sb.append(m.getKey()).append(": ").append(StringUtil.removeDoubleQuotes(value))
+                            .append("; ");
+                    }
+                    if (DocAnnotationConstants.SIZE.equals(m.getKey())) {
+                        sb.append(m.getKey()).append(": ").append(StringUtil.removeDoubleQuotes(value))
+                            .append("; ");
+                    }
+                }
+            }
+        }
+        if (sb.length() < 1) {
+            return DocGlobalConstants.EMPTY;
+        }
+        StringBuilder finalSb = new StringBuilder();
+        finalSb.append("\nValidate[").append(sb).append("]");
+        return finalSb.toString();
+    }
+
 }

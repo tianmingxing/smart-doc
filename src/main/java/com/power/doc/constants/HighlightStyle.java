@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,9 +22,13 @@
  */
 package com.power.doc.constants;
 
-import com.power.common.util.StringUtil;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
-import java.util.*;
+import com.power.common.util.StringUtil;
 
 /**
  * @author jitmit 2020/11/16
@@ -44,105 +48,105 @@ public class HighlightStyle {
 
     static {
         LIGHT_STYLE = Arrays.asList(
-                DEFAULT_STYLE,
-                "a11y-light",
-                "arduino-light",
-                "ascetic",
-                "atelier-cave-light",
-                "atelier-dune-light",
-                "atelier-estuary-light",
-                "atelier-forest-light",
-                "atelier-heath-light",
-                "atelier-lakeside-light",
-                "atelier-plateau-light",
-                "atelier-savanna-light",
-                "atelier-seaside-light",
-                "atelier-sulphurpool-light",
-                "atom-one-light",
-                "color-brewer",
-                "docco",
-                "github-gist",
-                "googlecode",
-                "grayscale",
-                "gruvbox-light",
-                "idea",
-                "isbl-editor-light",
-                "kimbie.light",
-                "lightfair",
-                "magula",
-                "mono-blue",
-                "nnfx",
-                "paraiso-light",
-                "purebasic",
-                "qtcreator_light",
-                "routeros",
-                "school-book",
-                "solarized-light",
-                "tomorrow",
-                "vs",
-                "xcode"
+            DEFAULT_STYLE,
+            "a11y-light",
+            "arduino-light",
+            "ascetic",
+            "atelier-cave-light",
+            "atelier-dune-light",
+            "atelier-estuary-light",
+            "atelier-forest-light",
+            "atelier-heath-light",
+            "atelier-lakeside-light",
+            "atelier-plateau-light",
+            "atelier-savanna-light",
+            "atelier-seaside-light",
+            "atelier-sulphurpool-light",
+            "atom-one-light",
+            "color-brewer",
+            "docco",
+            "github-gist",
+            "googlecode",
+            "grayscale",
+            "gruvbox-light",
+            "idea",
+            "isbl-editor-light",
+            "kimbie.light",
+            "lightfair",
+            "magula",
+            "mono-blue",
+            "nnfx",
+            "paraiso-light",
+            "purebasic",
+            "qtcreator_light",
+            "routeros",
+            "school-book",
+            "solarized-light",
+            "tomorrow",
+            "vs",
+            "xcode"
         );
 
     }
 
     static {
         DARK_STYLE = Arrays.asList(
-                "a11y-dark",
-                "agate",
-                "an-old-hope",
-                "androidstudio",
-                "arta",
-                "atelier-cave-dark",
-                "atelier-dune-dark",
-                "atelier-estuary-dark",
-                "atelier-forest-dark",
-                "atelier-heath-dark",
-                "atelier-lakeside-dark",
-                "atelier-plateau-dark",
-                "atelier-savanna-dark",
-                "atelier-seaside-dark",
-                "atelier-sulphurpool-dark",
-                "atom-one-dark-reasonable",
-                "atom-one-dark",
-                "brown-paper",
-                "codepen-embed",
-                "darcula",
-                "dark",
-                "default",
-                "dracula",
-                "far",
-                "foundation",
-                "gml",
-                "gradient-dark",
-                "gruvbox-dark",
-                "hopscotch",
-                "hybrid",
-                "ir-black",
-                "isbl-editor-dark",
-                "kimbie.dark",
-                "lioshi",
-                "monokai",
-                "monokai-sublime",
-                "night-owl",
-                "nnfx-dark",
-                "nord",
-                "obsidian",
-                "ocean",
-                "paraiso-dark",
-                "pojoaque",
-                "qtcreator_dark",
-                "railscasts",
-                "rainbow",
-                "shades-of-purple",
-                "solarized-dark",
-                "srcery", "sunburst",
-                "tomorrow-night",
-                "tomorrow-night-blue",
-                "tomorrow-night-bright",
-                "tomorrow-night-eighties",
-                "vs2015",
-                "xt256",
-                "zenburn"
+            "a11y-dark",
+            "agate",
+            "an-old-hope",
+            "androidstudio",
+            "arta",
+            "atelier-cave-dark",
+            "atelier-dune-dark",
+            "atelier-estuary-dark",
+            "atelier-forest-dark",
+            "atelier-heath-dark",
+            "atelier-lakeside-dark",
+            "atelier-plateau-dark",
+            "atelier-savanna-dark",
+            "atelier-seaside-dark",
+            "atelier-sulphurpool-dark",
+            "atom-one-dark-reasonable",
+            "atom-one-dark",
+            "brown-paper",
+            "codepen-embed",
+            "darcula",
+            "dark",
+            "default",
+            "dracula",
+            "far",
+            "foundation",
+            "gml",
+            "gradient-dark",
+            "gruvbox-dark",
+            "hopscotch",
+            "hybrid",
+            "ir-black",
+            "isbl-editor-dark",
+            "kimbie.dark",
+            "lioshi",
+            "monokai",
+            "monokai-sublime",
+            "night-owl",
+            "nnfx-dark",
+            "nord",
+            "obsidian",
+            "ocean",
+            "paraiso-dark",
+            "pojoaque",
+            "qtcreator_dark",
+            "railscasts",
+            "rainbow",
+            "shades-of-purple",
+            "solarized-dark",
+            "srcery", "sunburst",
+            "tomorrow-night",
+            "tomorrow-night-blue",
+            "tomorrow-night-bright",
+            "tomorrow-night-eighties",
+            "vs2015",
+            "xt256",
+            "zenburn"
         );
     }
 
@@ -171,7 +175,6 @@ public class HighlightStyle {
         background.put("atelier-savanna-light", "#ecf4ee");
         background.put("atelier-seaside-dark", "#131513");
         background.put("atelier-seaside-light", "#f4fbf4");
-        background.put("atelier-cave-light", "#efecf4");
         background.put("atelier-sulphurpool-dark", "#202746");
         background.put("atelier-sulphurpool-light", "#f5f7ff");
         background.put("atom-one-dark", "#282c34");

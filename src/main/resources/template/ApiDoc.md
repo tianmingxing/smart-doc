@@ -4,10 +4,11 @@
 for(doc in list){
 %>
 <%if(doc.deprecated){%>
-## ~~${doc.desc}~~
+## ~~${htmlEscape(doc.desc)}~~
 <%}else{%>
-## ${doc.desc}
+## ${htmlEscape(doc.desc)}
 <%}%>
+
 **URL:** `${doc.url}`
 
 **Type:** `${doc.type}`
@@ -23,44 +24,44 @@ for(doc in list){
 <%if(isNotEmpty(doc.headers)){%>
 **Request-headers:**
 
-Header | Type|Description|Required|Since
----|---|---|---|----
+| Header | Type | Required | Description | Since |
+|--------|------|----------|-------------|-------|
 ${doc.headers}
 <%}%>
 
 <%if(isNotEmpty(doc.pathParams)){%>
 **Path-parameters:**
 
-Parameter|Type|Description|Required|Since
----|---|---|---|---
+| Parameter | Type | Required | Description | Since |
+|-----------|------|----------|-------------|-------|
 <%
 for(param in doc.pathParams){
 %>
-${param.field}|${param.type}|${param.desc}|${param.required}|${param.version}
+|${param.field}|${param.type}|${param.required}|${lineBreaksToBr(param.desc)}|${param.version}|
 <%}%>
 <%}%>
 
 <%if(isNotEmpty(doc.queryParams)){%>
 **Query-parameters:**
 
-Parameter|Type|Description|Required|Since
----|---|---|---|---
+| Parameter | Type | Required | Description | Since |
+|-----------|------|----------|-------------|-------|
 <%
 for(param in doc.queryParams){
 %>
-${param.field}|${param.type}|${param.desc}|${param.required}|${param.version}
+|${param.field}|${param.type}|${param.required}|${lineBreaksToBr(param.desc)}|${param.version}|
 <%}%>
 <%}%>
 
 <%if(isNotEmpty(doc.requestParams)){%>
 **Body-parameters:**
 
-Parameter|Type|Description|Required|Since
----|---|---|---|---
+| Parameter | Type | Required | Description | Since |
+|-----------|------|----------|-------------|-------|
 <%
 for(param in doc.requestParams){
 %>
-${param.field}|${param.type}|${param.desc}|${param.required}|${param.version}
+|${param.field}|${param.type}|${param.required}|${lineBreaksToBr(param.desc)}|${param.version}|
 <%}%>
 <%}%>
 
@@ -71,14 +72,15 @@ ${doc.requestUsage}
 ```
 <%}%>
 <%if(isNotEmpty(doc.responseParams)){%>
+
 **Response-fields:**
 
-Field | Type|Description|Since
----|---|---|---
+| Field | Type | Description | Since |
+|-------|------|-------------|-------|
 <%
 for(param in doc.responseParams){
 %>
-${param.field}|${param.type}|${param.desc}|${param.version}
+|${param.field}|${param.type}|${lineBreaksToBr(param.desc)}|${param.version}|
 <%}%>
 <%}%>
 

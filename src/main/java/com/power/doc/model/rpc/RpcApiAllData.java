@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,11 +22,11 @@
  */
 package com.power.doc.model.rpc;
 
+import java.util.List;
+
 import com.power.doc.model.ApiDocDict;
 import com.power.doc.model.ApiErrorCode;
 import com.power.doc.model.RevisionLog;
-
-import java.util.List;
 
 /**
  * @author yu 2020/5/24.

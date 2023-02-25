@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,10 +22,10 @@
  */
 package com.power.doc.model.request;
 
+import java.util.List;
+
 import com.power.doc.model.ApiReqParam;
 import com.power.doc.model.FormData;
-
-import java.util.List;
 
 /**
  * @author yu 2020/12/21.
@@ -42,6 +42,11 @@ public class CurlRequest {
     private String body;
 
     private String contentType;
+
+    public static CurlRequest builder() {
+        return new CurlRequest();
+    }
+
     public List<FormData> getFileFormDataList() {
         return fileFormDataList;
     }
@@ -49,10 +54,6 @@ public class CurlRequest {
     public CurlRequest setFileFormDataList(List<FormData> fileFormDataList) {
         this.fileFormDataList = fileFormDataList;
         return this;
-    }
-
-    public static CurlRequest builder() {
-        return new CurlRequest();
     }
 
     public String getType() {

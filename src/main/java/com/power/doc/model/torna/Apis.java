@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -28,6 +28,7 @@ import java.util.List;
  * @author xingzi 2021/2/8 10:07
  **/
 public class Apis {
+
     private String name;
     private String description;
     private String url;

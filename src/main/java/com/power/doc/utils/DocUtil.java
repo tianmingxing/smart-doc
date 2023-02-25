@@ -1,7 +1,7 @@
 /*
  * smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -24,10 +24,8 @@ package com.power.doc.utils;
 
 import com.mifmif.common.regex.Generex;
 import com.power.common.util.*;
-import com.power.doc.constants.DocAnnotationConstants;
-import com.power.doc.constants.DocGlobalConstants;
-import com.power.doc.constants.DocTags;
-import com.power.doc.constants.JAXRSAnnotations;
+import com.power.doc.constants.*;
+import com.power.doc.extension.dict.DictionaryValuesResolver;
 import com.power.doc.model.*;
 import com.power.doc.model.request.RequestMapping;
 import com.thoughtworks.qdox.JavaProjectBuilder;
@@ -40,11 +38,15 @@ import net.datafaker.Faker;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.power.doc.constants.DocGlobalConstants.JSON_CONTENT_TYPE;
+import static com.power.doc.constants.DocGlobalConstants.NO_COMMENTS_FOUND;
+import static com.power.doc.model.SystemPlaceholders.*;
 
 /**
  * Description:
@@ -57,14 +59,13 @@ public class DocUtil {
     private static Faker faker = new Faker(new Locale("en-US"));
     private static Faker enFaker = new Faker(new Locale("en-US"));
 
-    private static String CLASS_PATTERN = "^([A-Za-z]{1}[A-Za-z\\d_]*\\.)+[A-Za-z][A-Za-z\\d_]*$";
-
     private static Map<String, String> fieldValue = new LinkedHashMap<>();
 
     static {
         fieldValue.put("uuid-string", UUID.randomUUID().toString());
         fieldValue.put("traceid-string", UUID.randomUUID().toString());
         fieldValue.put("id-string", String.valueOf(RandomUtil.randomInt(1, 200)));
+        fieldValue.put("ids-string", String.valueOf(RandomUtil.randomInt(1, 200)));
         fieldValue.put("nickname-string", enFaker.name().username());
         fieldValue.put("hostname-string", faker.internet().ipV4Address());
         fieldValue.put("name-string", faker.name().username());
@@ -99,7 +100,7 @@ public class DocUtil {
         fieldValue.put("date-date", DateTimeUtil.dateToStr(new Date(), DateTimeUtil.DATE_FORMAT_DAY));
         fieldValue.put("begintime-date", DateTimeUtil.dateToStr(new Date(), DateTimeUtil.DATE_FORMAT_DAY));
         fieldValue.put("endtime-date", DateTimeUtil.dateToStr(new Date(), DateTimeUtil.DATE_FORMAT_DAY));
-        fieldValue.put("time-localtime", DateTimeUtil.long2Str(System.currentTimeMillis(), DateTimeUtil.DATE_FORMAT_SECOND));
+        fieldValue.put("time-localtime", LocalDateTime.now().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
         fieldValue.put("state-int", String.valueOf(RandomUtil.randomInt(0, 10)));
         fieldValue.put("state-integer", String.valueOf(RandomUtil.randomInt(0, 10)));
         fieldValue.put("flag-int", String.valueOf(RandomUtil.randomInt(0, 10)));
@@ -196,34 +197,6 @@ public class DocUtil {
         }
     }
 
-    /**
-     * valid java class name
-     *
-     * @param className class nem
-     * @return boolean
-     */
-    public static boolean isClassName(String className) {
-        if (StringUtil.isEmpty(className) || !className.contains(".")) {
-            return false;
-        }
-        if (ValidateUtil.isContainsChinese(className)) {
-            return false;
-        }
-        String classNameTemp = className;
-        if (className.contains("<")) {
-            int index = className.indexOf("<");
-            classNameTemp = className.substring(0, index);
-        }
-        if (!ValidateUtil.validate(classNameTemp, CLASS_PATTERN)) {
-            return false;
-        }
-        if (className.contains("<") && !className.contains(">")) {
-            return false;
-        } else if (className.contains(">") && !className.contains("<")) {
-            return false;
-        }
-        return true;
-    }
 
     /**
      * match controller package
@@ -259,7 +232,9 @@ public class DocUtil {
      * @return formatted string
      */
     public static String formatAndRemove(String str, Map<String, String> values) {
-        // /detail/{id:[a-zA-Z0-9]{3}}/{name:[a-zA-Z0-9]{3}}
+        if (hasSystemProperties(str)) {
+            str = DocUtil.delPropertiesUrl(str, new HashSet<>());
+        }
         if (str.contains(":")) {
             String[] strArr = str.split("/");
             for (int i = 0; i < strArr.length; i++) {
@@ -305,13 +280,19 @@ public class DocUtil {
      * @return String
      */
     public static String formatPathUrl(String str) {
+        if (hasSystemProperties(str)) {
+            str = DocUtil.delPropertiesUrl(str, new HashSet<>());
+        }
         if (!str.contains(":")) {
             return str;
         }
         String[] strArr = str.split("/");
         for (int i = 0; i < strArr.length; i++) {
             String pathParam = strArr[i];
-            if (pathParam.contains(":")) {
+            if (pathParam.startsWith("http:") || pathParam.startsWith("https:")) {
+                continue;
+            }
+            if (pathParam.startsWith("{") && pathParam.contains(":")) {
                 strArr[i] = pathParam.substring(0, pathParam.indexOf(":")) + "}";
             }
         }
@@ -343,7 +324,7 @@ public class DocUtil {
             case "MethodType.PATCH":
                 return "PATCH";
             default:
-                return method;
+                return "GET";
         }
     }
 
@@ -374,8 +355,7 @@ public class DocUtil {
         List<String> result = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         Stack<Character> stack = new Stack<>();
-        for (int i = 0; i < chars.length; i++) {
-            char s = chars[i];
+        for (char s : chars) {
             if ('{' == s) {
                 stack.push(s);
             }
@@ -413,7 +393,7 @@ public class DocUtil {
             if (StringUtil.isEmpty(value) && StringUtil.isNotEmpty(className)) {
                 throw new RuntimeException("ERROR: #" + javaMethod.getName()
                         + "() - bad @" + tagName + " javadoc from " + javaMethod.getDeclaringClass()
-                        .getCanonicalName() + ", must be add comment if you use it.");
+                        .getCanonicalName() + ", This is an invalid comment.");
             }
             if (DocTags.PARAM.equals(tagName)) {
                 String pName = value;
@@ -423,6 +403,10 @@ public class DocUtil {
                 if (idx > -1) {
                     pName = value.substring(0, idx);
                     pValue = value.substring(idx + 1);
+                }
+                if ("|".equals(StringUtil.trim(pValue)) && StringUtil.isNotEmpty(className)) {
+                    throw new RuntimeException("ERROR: An invalid comment was written [@" + tagName + " |]," +
+                            "Please @see " + javaMethod.getDeclaringClass().getCanonicalName() + "." + javaMethod.getName() + "()");
                 }
                 paramTagMap.put(pName, pValue);
             } else {
@@ -477,7 +461,7 @@ public class DocUtil {
                 } else {
                     value = entry.getKey() + entry.getValue();
                 }
-                value = replaceNewLineToHtmlBr(value);
+//                value = replaceNewLineToHtmlBr(value);
             }
         }
         return value;
@@ -506,7 +490,7 @@ public class DocUtil {
         if (StringUtil.isNotEmpty(content)) {
             return content.replaceAll("(\r\n|\r|\n|\n\r)", "<br>");
         }
-        return null;
+        return StringUtils.EMPTY;
     }
 
     public static String handleJsonStr(String content) {
@@ -577,16 +561,24 @@ public class DocUtil {
             case "java.util.uuid":
             case "uuid":
             case "enum":
+            case "java.util.date":
             case "localdatetime":
             case "java.time.localdatetime":
+            case "java.time.year":
+            case "java.time.localtime":
+            case "java.time.yearmonth":
+            case "java.time.monthday":
             case "java.time.localdate":
+            case "java.time.period":
             case "localdate":
             case "offsetdatetime":
             case "localtime":
             case "timestamp":
             case "zoneddatetime":
+            case "period":
             case "java.time.zoneddatetime":
             case "java.time.offsetdatetime":
+            case "java.sql.timestamp":
             case "java.lang.character":
             case "character":
             case "org.bson.types.objectid":
@@ -609,6 +601,7 @@ public class DocUtil {
             case "int":
             case "short":
             case "java.lang.short":
+            case "int32":
                 return "integer";
             case "double":
             case "java.lang.long":
@@ -616,14 +609,14 @@ public class DocUtil {
             case "java.lang.float":
             case "float":
             case "bigdecimal":
+            case "int64":
             case "biginteger":
                 return "number";
             case "java.lang.boolean":
             case "boolean":
                 return "boolean";
-            case "map":
-                return "map";
             case "multipartfile":
+            case "file":
                 return "file";
             default:
                 return "object";
@@ -641,8 +634,7 @@ public class DocUtil {
             return "";
         }
         return comment.replaceAll("<", "&lt;")
-                .replaceAll(">", "&gt;")
-                .replaceAll(System.lineSeparator(), "");
+                .replaceAll(">", "&gt;");
     }
 
     /**
@@ -652,7 +644,7 @@ public class DocUtil {
      * @return the url
      */
     public static String getRequestMappingUrl(JavaAnnotation annotation) {
-        return getPathUrl(annotation, DocAnnotationConstants.VALUE_PROP, DocAnnotationConstants.PATH_PROP);
+        return getPathUrl(annotation, DocAnnotationConstants.VALUE_PROP, DocAnnotationConstants.NAME_PROP, DocAnnotationConstants.PATH_PROP);
     }
 
     /**
@@ -679,8 +671,8 @@ public class DocUtil {
      * resolve the string of {@link Add} which has {@link FieldRef}(to be exact is {@link FieldRef}) children,
      * the value of {@link FieldRef} will be resolved with the real value of it if it is the static final member of any other class
      *
-     * @param annotationValue
-     * @return
+     * @param annotationValue annotationValue
+     * @return annotation value
      */
     public static String resolveAnnotationValue(AnnotationValue annotationValue) {
         if (annotationValue instanceof Add) {
@@ -727,7 +719,7 @@ public class DocUtil {
         return resolveAnnotationValue(annotationValue);
     }
 
-    public static List<ApiErrorCode> errorCodeDictToList(ApiConfig config) {
+    public static List<ApiErrorCode> errorCodeDictToList(ApiConfig config, JavaProjectBuilder javaProjectBuilder) {
         if (CollectionUtil.isNotEmpty(config.getErrorCodes())) {
             return config.getErrorCodes();
         }
@@ -735,7 +727,8 @@ public class DocUtil {
         if (CollectionUtil.isEmpty(errorCodeDictionaries)) {
             return new ArrayList<>(0);
         } else {
-            List<ApiErrorCode> errorCodeList = new ArrayList<>();
+            ClassLoader classLoader = config.getClassLoader();
+            Set<ApiErrorCode> errorCodeList = new HashSet<>();
             try {
                 for (ApiErrorCodeDictionary dictionary : errorCodeDictionaries) {
                     Class<?> clzz = dictionary.getEnumClass();
@@ -743,16 +736,49 @@ public class DocUtil {
                         if (StringUtil.isEmpty(dictionary.getEnumClassName())) {
                             throw new RuntimeException("Enum class name can't be null.");
                         }
-                        clzz = Class.forName(dictionary.getEnumClassName());
+                        clzz = classLoader.loadClass(dictionary.getEnumClassName());
                     }
-                    List<ApiErrorCode> enumDictionaryList = EnumUtil.getEnumInformation(clzz, dictionary.getCodeField(),
-                            dictionary.getDescField());
-                    errorCodeList.addAll(enumDictionaryList);
+
+                    Class<?> valuesResolverClass = null;
+                    if (StringUtil.isNotEmpty(dictionary.getValuesResolverClass())) {
+                        valuesResolverClass = classLoader.loadClass(dictionary.getValuesResolverClass());
+                    }
+                    if (null != valuesResolverClass && DictionaryValuesResolver.class.isAssignableFrom(valuesResolverClass)) {
+                        DictionaryValuesResolver resolver = (DictionaryValuesResolver) DocClassUtil.newInstance(valuesResolverClass);
+                        // add two method results
+                        errorCodeList.addAll(resolver.resolve());
+                        errorCodeList.addAll(resolver.resolve(clzz));
+                    } else if (clzz.isInterface()) {
+                        Set<Class<? extends Enum>> enumImplementSet = dictionary.getEnumImplementSet();
+                        if (CollectionUtil.isEmpty(enumImplementSet)) {
+                            continue;
+                        }
+
+                        for (Class<? extends Enum> enumClass : enumImplementSet) {
+                            JavaClass interfaceClass = javaProjectBuilder.getClassByName(enumClass.getCanonicalName());
+                            if (Objects.nonNull(interfaceClass.getTagByName(DocTags.IGNORE))) {
+                                continue;
+                            }
+                            List<ApiErrorCode> enumDictionaryList = EnumUtil.getEnumInformation(enumClass, dictionary.getCodeField(),
+                                    dictionary.getDescField());
+                            errorCodeList.addAll(enumDictionaryList);
+                        }
+
+                    } else {
+                        JavaClass javaClass = javaProjectBuilder.getClassByName(clzz.getCanonicalName());
+                        if (Objects.nonNull(javaClass.getTagByName(DocTags.IGNORE))) {
+                            continue;
+                        }
+                        List<ApiErrorCode> enumDictionaryList = EnumUtil.getEnumInformation(clzz, dictionary.getCodeField(),
+                                dictionary.getDescField());
+                        errorCodeList.addAll(enumDictionaryList);
+                    }
+
                 }
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
-            return errorCodeList;
+            return new ArrayList<>(errorCodeList);
         }
     }
 
@@ -770,6 +796,8 @@ public class DocUtil {
         }
         List<ApiDocDict> apiDocDictList = new ArrayList<>();
         try {
+
+            ClassLoader classLoader = config.getClassLoader();
             int order = 0;
             for (ApiDataDictionary apiDataDictionary : apiDataDictionaryList) {
                 order++;
@@ -778,22 +806,55 @@ public class DocUtil {
                     if (StringUtil.isEmpty(apiDataDictionary.getEnumClassName())) {
                         throw new RuntimeException("Enum class name can't be null.");
                     }
-                    clazz = Class.forName(apiDataDictionary.getEnumClassName());
+                    clazz = classLoader.loadClass(apiDataDictionary.getEnumClassName());
                 }
-                ApiDocDict apiDocDict = new ApiDocDict();
-                apiDocDict.setOrder(order);
-                apiDocDict.setTitle(apiDataDictionary.getTitle());
-                JavaClass javaClass = javaProjectBuilder.getClassByName(clazz.getCanonicalName());
-                if (apiDataDictionary.getTitle() == null) {
-                    apiDocDict.setTitle(javaClass.getComment());
+
+                if (clazz.isInterface()) {
+                    Set<Class<? extends Enum>> enumImplementSet = apiDataDictionary.getEnumImplementSet();
+                    if (CollectionUtil.isEmpty(enumImplementSet)) {
+                        continue;
+                    }
+
+                    for (Class<? extends Enum> enumClass : enumImplementSet) {
+                        JavaClass javaClass = javaProjectBuilder.getClassByName(enumClass.getCanonicalName());
+                        if (Objects.nonNull(javaClass.getTagByName(DocTags.IGNORE))) {
+                            continue;
+                        }
+                        DocletTag apiNoteTag = javaClass.getTagByName(DocTags.API_NOTE);
+                        ApiDocDict apiDocDict = new ApiDocDict();
+                        apiDocDict.setOrder(order++);
+                        apiDocDict.setTitle(javaClass.getComment());
+                        apiDocDict.setDescription(
+                                DocUtil.getEscapeAndCleanComment(Optional.ofNullable(apiNoteTag).map(DocletTag::getValue).orElse(StringUtil.EMPTY)));
+                        List<DataDict> enumDictionaryList = EnumUtil.getEnumInformation(enumClass, apiDataDictionary.getCodeField(),
+                                apiDataDictionary.getDescField());
+                        apiDocDict.setDataDictList(enumDictionaryList);
+                        apiDocDictList.add(apiDocDict);
+                    }
+
+                } else {
+                    ApiDocDict apiDocDict = new ApiDocDict();
+                    apiDocDict.setOrder(order);
+                    apiDocDict.setTitle(apiDataDictionary.getTitle());
+                    JavaClass javaClass = javaProjectBuilder.getClassByName(clazz.getCanonicalName());
+                    if (Objects.nonNull(javaClass.getTagByName(DocTags.IGNORE))) {
+                        continue;
+                    }
+                    DocletTag apiNoteTag = javaClass.getTagByName(DocTags.API_NOTE);
+                    apiDocDict.setDescription(
+                            DocUtil.getEscapeAndCleanComment(Optional.ofNullable(apiNoteTag).map(DocletTag::getValue).orElse(StringUtil.EMPTY)));
+                    if (apiDataDictionary.getTitle() == null) {
+                        apiDocDict.setTitle(javaClass.getComment());
+                    }
+                    List<DataDict> enumDictionaryList = EnumUtil.getEnumInformation(clazz, apiDataDictionary.getCodeField(),
+                            apiDataDictionary.getDescField());
+                    if (!clazz.isEnum()) {
+                        throw new RuntimeException(clazz.getCanonicalName() + " is not an enum class.");
+                    }
+                    apiDocDict.setDataDictList(enumDictionaryList);
+                    apiDocDictList.add(apiDocDict);
                 }
-                List<DataDict> enumDictionaryList = EnumUtil.getEnumInformation(clazz, apiDataDictionary.getCodeField(),
-                        apiDataDictionary.getDescField());
-                if (!clazz.isEnum()) {
-                    throw new RuntimeException(clazz.getCanonicalName() + " is not an enum class.");
-                }
-                apiDocDict.setDataDictList(enumDictionaryList);
-                apiDocDictList.add(apiDocDict);
+
             }
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
@@ -834,7 +895,8 @@ public class DocUtil {
     }
 
     public static String handleContentType(String mediaType, JavaAnnotation annotation, String annotationName) {
-        if (JAXRSAnnotations.JAX_PRODUCES_FULLY.equals(annotationName)) {
+        if (JakartaJaxrsAnnotations.JAX_PRODUCES_FULLY.equals(annotationName)
+                || JAXRSAnnotations.JAX_PRODUCES_FULLY.equals(annotationName)) {
             String annotationValue = StringUtil.removeQuotes(DocUtil.getRequestHeaderValue(annotation));
             if ("MediaType.APPLICATION_JSON".equals(annotationValue) || "application/json".equals(annotationValue)
                     || "MediaType.TEXT_PLAIN".equals(annotationValue) || "text/plain".equals(annotationValue)) {
@@ -852,5 +914,105 @@ public class DocUtil {
         return DocPathUtil.matches(requestMapping.getShortUrl(), apiReqHeader.getPathPatterns()
                 , apiReqHeader.getExcludePathPatterns());
 
+    }
+
+    public static String paramCommentResolve(String comment) {
+        if (StringUtil.isEmpty(comment)) {
+            comment = NO_COMMENTS_FOUND;
+        } else {
+            if (comment.contains("|")) {
+                comment = comment.substring(0, comment.indexOf("|"));
+            }
+        }
+        return comment;
+    }
+
+    /**
+     * del ${server.port:/error}
+     *
+     * @param value               url
+     * @param visitedPlaceholders cycle
+     * @return url deleted
+     */
+    public static String delPropertiesUrl(String value, Set<String> visitedPlaceholders) {
+        int startIndex = value.indexOf(PLACEHOLDER_PREFIX);
+        if (startIndex == -1) {
+            return value;
+        }
+        StringBuilder result = new StringBuilder(value);
+        while (startIndex != -1) {
+            int endIndex = findPlaceholderEndIndex(result, startIndex);
+            if (endIndex != -1) {
+                String placeholder = result.substring(startIndex + PLACEHOLDER_PREFIX.length(), endIndex);
+                String originalPlaceholder = placeholder;
+                if (visitedPlaceholders == null) {
+                    visitedPlaceholders = new HashSet<>(4);
+                }
+                if (!visitedPlaceholders.add(originalPlaceholder)) {
+                    throw new IllegalArgumentException(
+                            "Circular placeholder reference '" + originalPlaceholder + "' in property definitions");
+                }
+                // Recursive invocation, parsing placeholders contained in the placeholder key.
+                placeholder = delPropertiesUrl(placeholder, visitedPlaceholders);
+                String propVal = SystemPlaceholders.replaceSystemProperties(placeholder);
+                if (propVal == null) {
+                    int separatorIndex = placeholder.indexOf(":");
+                    if (separatorIndex != -1) {
+                        String actualPlaceholder = placeholder.substring(0, separatorIndex);
+                        String defaultValue = placeholder.substring(separatorIndex + ":".length());
+                        propVal = SystemPlaceholders.replaceSystemProperties(actualPlaceholder);
+                        if (propVal == null) {
+                            propVal = defaultValue;
+                        }
+                    }
+                }
+                if (propVal != null) {
+                    propVal = delPropertiesUrl(propVal, visitedPlaceholders);
+                    result.replace(startIndex, endIndex + PLACEHOLDER_PREFIX.length(), propVal);
+                    startIndex = result.indexOf(PLACEHOLDER_PREFIX, startIndex + propVal.length());
+                } else {
+                    // Proceed with unprocessed value.
+                    startIndex = result.indexOf(PLACEHOLDER_PREFIX, endIndex + PLACEHOLDER_PREFIX.length());
+                }
+
+                visitedPlaceholders.remove(originalPlaceholder);
+            } else {
+                startIndex = -1;
+            }
+        }
+        return result.toString();
+    }
+
+    private static int findPlaceholderEndIndex(CharSequence buf, int startIndex) {
+        int index = startIndex + PLACEHOLDER_PREFIX.length();
+        int withinNestedPlaceholder = 0;
+        while (index < buf.length()) {
+            if (substringMatch(buf, index, PLACEHOLDER_SUFFIX)) {
+                if (withinNestedPlaceholder > 0) {
+                    withinNestedPlaceholder--;
+                    index = index + "}".length();
+                } else {
+                    return index;
+                }
+            } else if (substringMatch(buf, index, SIMPLE_PREFIX)) {
+                withinNestedPlaceholder++;
+                index = index + SIMPLE_PREFIX.length();
+            } else {
+                index++;
+            }
+        }
+        return -1;
+    }
+
+    public static boolean substringMatch(CharSequence str, int index, CharSequence substring) {
+        if (index + substring.length() > str.length()) {
+            return false;
+        }
+        for (int i = 0; i < substring.length(); i++) {
+            if (str.charAt(index + i) != substring.charAt(i)) {
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,10 +22,11 @@
  */
 package com.power.doc.model.postman;
 
-import com.power.common.util.DateTimeUtil;
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.UUID;
+
+import com.power.common.util.DateTimeUtil;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author xingzi

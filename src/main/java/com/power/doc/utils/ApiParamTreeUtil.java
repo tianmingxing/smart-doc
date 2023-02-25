@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,17 +22,18 @@
  */
 package com.power.doc.utils;
 
-import com.power.common.util.CollectionUtil;
-import com.power.common.util.StringUtil;
-import com.power.doc.model.ApiMethodReqParam;
-import com.power.doc.model.ApiParam;
-import com.power.doc.model.ApiReqParam;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.power.common.util.CollectionUtil;
+import com.power.common.util.StringUtil;
+import com.power.doc.constants.DocGlobalConstants;
+import com.power.doc.model.ApiMethodReqParam;
+import com.power.doc.model.ApiParam;
+import com.power.doc.model.ApiReqParam;
 
 /**
  * @author yu 2020/8/8.
@@ -47,7 +48,7 @@ public class ApiParamTreeUtil {
         // find root
         for (ApiParam apiParam : apiParamList) {
             // remove pre of field
-            apiParam.setField(apiParam.getField().replaceAll("└─", "").replaceAll("&nbsp;", ""));
+            apiParam.setField(apiParam.getField().replaceAll(DocGlobalConstants.PARAM_PREFIX, "").replaceAll("&nbsp;", ""));
             // pid == 0
             if (apiParam.getPid() == 0) {
                 params.add(apiParam);
@@ -95,10 +96,10 @@ public class ApiParamTreeUtil {
      * @param queryReqParamMap   configQueryParam
      * @param pathReqParamMap    configPathParam
      * @param requestBodyCounter hasRequestBody
-     * @return
+     * @return ApiMethodReqParam
      */
     public static ApiMethodReqParam buildMethodReqParam(List<ApiParam> paramList, final Map<String, ApiReqParam> queryReqParamMap,
-                                                        final Map<String, ApiReqParam> pathReqParamMap, int requestBodyCounter) {
+        final Map<String, ApiReqParam> pathReqParamMap, int requestBodyCounter) {
         List<ApiParam> pathParams = new ArrayList<>();
         List<ApiParam> queryParams = new ArrayList<>();
         List<ApiParam> bodyParams = new ArrayList<>();
@@ -128,7 +129,7 @@ public class ApiParamTreeUtil {
                 continue;
             }
             final ApiParam apiParam = ApiReqParam.convertToApiParam(value)
-                    .setQueryParam(true).setId(queryParams.size() + 1);
+                .setQueryParam(true).setId(queryParams.size() + 1);
             queryParams.add(apiParam);
         }
 
@@ -138,14 +139,14 @@ public class ApiParamTreeUtil {
                 continue;
             }
             final ApiParam apiParam = ApiReqParam.convertToApiParam(value)
-                    .setPathParam(true).setId(pathParams.size() + 1);
+                .setPathParam(true).setId(pathParams.size() + 1);
             pathParams.add(apiParam);
         }
 
         return ApiMethodReqParam.builder()
-                .setRequestParams(bodyParams)
-                .setPathParams(pathParams)
-                .setQueryParams(queryParams);
+            .setRequestParams(bodyParams)
+            .setPathParams(pathParams)
+            .setQueryParams(queryParams);
     }
 
 }

@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,16 +22,25 @@
  */
 package com.power.doc.utils;
 
-import com.power.common.util.StringUtil;
-
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import com.power.common.util.CollectionUtil;
+import com.power.common.util.StringUtil;
+import com.power.doc.model.ApiParam;
 
 /**
  * @author yu 2020/11/29.
  */
 public class OpenApiSchemaUtil {
+
+    public static final String NO_BODY_PARAM = "NO_BODY_PARAM";
+    static final Pattern PATTRRN = Pattern.compile("[A-Z]\\w+.*?|[A-Z]");
 
     public static Map<String, Object> primaryTypeSchema(String primaryType) {
         Map<String, Object> map = new HashMap<>();
@@ -72,4 +81,40 @@ public class OpenApiSchemaUtil {
         return map;
     }
 
+    public static String getClassNameFromParams(List<ApiParam> apiParams, String suffix) {
+        // if array[Primitive] or Primitive
+        if (CollectionUtil.isNotEmpty(apiParams) && apiParams.size() == 1
+                && CollectionUtil.isEmpty(apiParams.get(0).getChildren())) {
+            return "string";
+        }
+        for (ApiParam a : apiParams) {
+            if (StringUtil.isNotEmpty(a.getClassName())) {
+                return OpenApiSchemaUtil.delClassName(a.getClassName()) + suffix;
+            }
+        }
+        return NO_BODY_PARAM;
+    }
+
+    public static String delClassName(String className) {
+        return String.join("", getPatternResult(PATTRRN, className));
+    }
+
+    public static List<String> getPatternResult(Pattern p, String content) {
+        List<String> matchers = new ArrayList<>();
+        Matcher m = p.matcher(content);
+        while (m.find()) {
+            matchers.add(m.group());
+        }
+        return matchers;
+    }
+
+    public static List<String> getPatternResult(String rex, String content) {
+        Pattern p = Pattern.compile(rex);
+        List<String> matchers = new ArrayList<>();
+        Matcher m = p.matcher(content);
+        while (m.find()) {
+            matchers.add(m.group());
+        }
+        return matchers;
+    }
 }

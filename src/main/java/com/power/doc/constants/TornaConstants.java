@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,16 +22,22 @@
  */
 package com.power.doc.constants;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.power.doc.model.ApiConfig;
-import org.apache.commons.lang3.StringUtils;
-
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.power.common.util.DateTimeUtil;
+import com.power.doc.model.ApiConfig;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author xingzi 2020/2/2
@@ -82,7 +88,7 @@ public class TornaConstants {
             param.put("name", name);
             param.put("app_key", config.getAppKey());
             param.put("data", data);
-            param.put("timestamp", getTime());
+            param.put("timestamp", DateTimeUtil.nowStrTime(DateTimeUtil.DATE_FORMAT_SECOND));
             param.put("version", "1.0");
             param.put("access_token", config.getAppToken());
             String sign = buildSign(param, config.getSecret());
@@ -95,10 +101,10 @@ public class TornaConstants {
     }
 
     /**
-     * 构建签名
+     * build sign
      *
-     * @param paramsMap 参数
-     * @param secret    密钥
+     * @param paramsMap param
+     * @param secret    secret
      * @return String
      */
     public static String buildSign(Map<String, ?> paramsMap, String secret) {
@@ -113,7 +119,7 @@ public class TornaConstants {
                 paramNameValue.append(paramName).append(value);
             }
         }
-        String source = secret + paramNameValue.toString() + secret;
+        String source = secret + paramNameValue + secret;
         return md5(source);
     }
 
@@ -136,22 +142,19 @@ public class TornaConstants {
 
     /**
      * Convert byte array to hex
+     *
      * @param bytes byte array
      * @return String
      */
     private static String byte2hex(byte[] bytes) {
         StringBuilder sign = new StringBuilder();
-        for (int i = 0; i < bytes.length; i++) {
-            String hex = Integer.toHexString(bytes[i] & 0xFF);
+        for (byte aByte : bytes) {
+            String hex = Integer.toHexString(aByte & 0xFF);
             if (hex.length() == 1) {
                 sign.append("0");
             }
             sign.append(hex.toUpperCase());
         }
         return sign.toString();
-    }
-
-    public static String getTime() {
-        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
     }
 }

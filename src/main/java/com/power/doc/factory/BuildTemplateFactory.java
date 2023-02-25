@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -34,10 +34,10 @@ public class BuildTemplateFactory {
      * Get Doc build template
      *
      * @param framework framework name
-     * @param <T> API doc type
+     * @param <T>       API doc type
      * @return Implements of IDocBuildTemplate
      */
-    public static <T> IDocBuildTemplate<T> getDocBuildTemplate(String framework) {
+    public static <T> IDocBuildTemplate getDocBuildTemplate(String framework) {
         String className = FrameworkEnum.getClassNameByFramework(framework);
         try {
             return (IDocBuildTemplate) Class.forName(className).newInstance();
@@ -46,7 +46,8 @@ public class BuildTemplateFactory {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
-            throw new RuntimeException("The class=>" + className + " is not found , smart-doc currently supported framework name can only be set in [dubbo, spring].");
+            throw new RuntimeException(
+                "The class=>" + className + " is not found , smart-doc currently supported framework name can only be set in [dubbo, spring].");
         }
         return null;
     }

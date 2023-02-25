@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,25 +22,42 @@
  */
 package com.power.doc.builder;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
+
 import com.power.common.constants.Charset;
 import com.power.common.util.CollectionUtil;
 import com.power.common.util.StringUtil;
 import com.power.doc.constants.DocGlobalConstants;
 import com.power.doc.constants.HighlightStyle;
 import com.power.doc.helper.JavaProjectBuilderHelper;
-import com.power.doc.model.*;
+import com.power.doc.model.ApiConfig;
+import com.power.doc.model.ApiConstant;
+import com.power.doc.model.ApiDataDictionary;
+import com.power.doc.model.ApiErrorCodeDictionary;
+import com.power.doc.model.ApiObjectReplacement;
+import com.power.doc.model.BodyAdvice;
+import com.power.doc.model.CustomField;
+import com.power.doc.model.DocJavaField;
+import com.power.doc.model.SourceCodePath;
 import com.power.doc.utils.JavaClassUtil;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.directorywalker.DirectoryScanner;
 import com.thoughtworks.qdox.directorywalker.SuffixFilter;
 import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.parser.ParseException;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 
 import static com.power.doc.constants.DocGlobalConstants.DEFAULT_SERVER_URL;
 
@@ -49,23 +66,25 @@ import static com.power.doc.constants.DocGlobalConstants.DEFAULT_SERVER_URL;
  */
 public class ProjectDocConfigBuilder {
 
-    private static Logger log = Logger.getLogger(ProjectDocConfigBuilder.class.getName());
+    private static final Logger log = Logger.getLogger(ProjectDocConfigBuilder.class.getName());
 
-    private JavaProjectBuilder javaProjectBuilder;
+    private final JavaProjectBuilder javaProjectBuilder;
 
-    private Map<String, JavaClass> classFilesMap = new ConcurrentHashMap<>();
+    private final Map<String, JavaClass> classFilesMap = new ConcurrentHashMap<>();
 
-    private Map<String, CustomField> customRespFieldMap = new ConcurrentHashMap<>();
+    private final Map<String, Class<? extends Enum>> enumClassMap = new ConcurrentHashMap<>();
 
-    private Map<String, CustomField> customReqFieldMap = new ConcurrentHashMap<>();
+    private final Map<CustomField.Key, CustomField> customRespFieldMap = new ConcurrentHashMap<>();
 
-    private Map<String, String> replaceClassMap = new ConcurrentHashMap<>();
+    private final Map<CustomField.Key, CustomField> customReqFieldMap = new ConcurrentHashMap<>();
 
-    private Map<String, String> constantsMap = new ConcurrentHashMap<>();
+    private final Map<String, String> replaceClassMap = new ConcurrentHashMap<>();
 
-    private String serverUrl;
+    private final Map<String, String> constantsMap = new ConcurrentHashMap<>();
 
-    private ApiConfig apiConfig;
+    private final String serverUrl;
+
+    private final ApiConfig apiConfig;
 
 
     public ProjectDocConfigBuilder(ApiConfig apiConfig, JavaProjectBuilder javaProjectBuilder) {
@@ -95,8 +114,45 @@ public class ProjectDocConfigBuilder {
         this.initCustomRequestFieldsMap(apiConfig);
         this.initReplaceClassMap(apiConfig);
         this.initConstants(apiConfig);
+        this.initDict(apiConfig);
         this.checkBodyAdvice(apiConfig.getRequestBodyAdvice());
         this.checkBodyAdvice(apiConfig.getResponseBodyAdvice());
+    }
+
+    private void initDict(ApiConfig apiConfig) {
+        if (enumClassMap.size() == 0) {
+            return;
+        }
+        List<ApiDataDictionary> dataDictionaries = apiConfig.getDataDictionaries();
+        if (Objects.isNull(dataDictionaries)) {
+            dataDictionaries = new ArrayList<>();
+        }
+
+        for (ApiDataDictionary dataDictionary : dataDictionaries) {
+            dataDictionary.setEnumImplementSet(getEnumImplementsByInterface(dataDictionary.getEnumClass()));
+        }
+
+        List<ApiErrorCodeDictionary> errorCodeDictionaries = apiConfig.getErrorCodeDictionaries();
+        if (Objects.isNull(errorCodeDictionaries)) {
+            errorCodeDictionaries = new ArrayList<>();
+        }
+
+        for (ApiErrorCodeDictionary errorCodeDictionary : errorCodeDictionaries) {
+            errorCodeDictionary.setEnumImplementSet(getEnumImplementsByInterface(errorCodeDictionary.getEnumClass()));
+        }
+    }
+
+    private Set<Class<? extends Enum>> getEnumImplementsByInterface(Class<?> enumClass) {
+        if (!enumClass.isInterface()) {
+            return Collections.emptySet();
+        }
+        Set<Class<? extends Enum>> set = new HashSet<>();
+        enumClassMap.forEach((k, v) -> {
+            if (enumClass.isAssignableFrom(v)) {
+                set.add(v);
+            }
+        });
+        return set;
     }
 
     public JavaClass getClassByName(String simpleName) {
@@ -131,7 +187,7 @@ public class ProjectDocConfigBuilder {
         }
     }
 
-    private void loadJavaSource(String strPath, JavaProjectBuilder builder){
+    private void loadJavaSource(String strPath, JavaProjectBuilder builder) {
         DirectoryScanner scanner = new DirectoryScanner(new File(strPath));
         scanner.addFilter(new SuffixFilter(".java"));
         scanner.scan(currentFile -> {
@@ -146,6 +202,20 @@ public class ProjectDocConfigBuilder {
     private void initClassFilesMap() {
         Collection<JavaClass> javaClasses = javaProjectBuilder.getClasses();
         for (JavaClass cls : javaClasses) {
+            if (cls.isEnum()) {
+                Class enumClass;
+                ClassLoader classLoader = apiConfig.getClassLoader();
+                try {
+                    if (Objects.isNull(classLoader)) {
+                        enumClass = Class.forName(cls.getFullyQualifiedName());
+                    } else {
+                        enumClass = classLoader.loadClass(cls.getFullyQualifiedName());
+                    }
+                    enumClassMap.put(cls.getFullyQualifiedName(), enumClass);
+                } catch (ClassNotFoundException e) {
+                    continue;
+                }
+            }
             classFilesMap.put(cls.getFullyQualifiedName(), cls);
         }
     }
@@ -153,7 +223,8 @@ public class ProjectDocConfigBuilder {
     private void initCustomResponseFieldsMap(ApiConfig config) {
         if (CollectionUtil.isNotEmpty(config.getCustomResponseFields())) {
             for (CustomField field : config.getCustomResponseFields()) {
-                customRespFieldMap.put(field.getOwnerClassName() + "." + field.getName(), field);
+                CustomField.Key key = CustomField.Key.create(field.getOwnerClassName(), field.getName());
+                customRespFieldMap.put(key, field);
             }
         }
     }
@@ -161,7 +232,8 @@ public class ProjectDocConfigBuilder {
     private void initCustomRequestFieldsMap(ApiConfig config) {
         if (CollectionUtil.isNotEmpty(config.getCustomRequestFields())) {
             for (CustomField field : config.getCustomRequestFields()) {
-                customReqFieldMap.put(field.getOwnerClassName() + "." + field.getName(), field);
+                CustomField.Key key = CustomField.Key.create(field.getOwnerClassName(), field.getName());
+                customReqFieldMap.put(key, field);
             }
         }
     }
@@ -245,6 +317,7 @@ public class ProjectDocConfigBuilder {
 
         }
     }
+
     public JavaProjectBuilder getJavaProjectBuilder() {
         return javaProjectBuilder;
     }
@@ -254,11 +327,11 @@ public class ProjectDocConfigBuilder {
         return classFilesMap;
     }
 
-    public Map<String, CustomField> getCustomRespFieldMap() {
+    public Map<CustomField.Key, CustomField> getCustomRespFieldMap() {
         return customRespFieldMap;
     }
 
-    public Map<String, CustomField> getCustomReqFieldMap() {
+    public Map<CustomField.Key, CustomField> getCustomReqFieldMap() {
         return customReqFieldMap;
     }
 
@@ -273,6 +346,10 @@ public class ProjectDocConfigBuilder {
 
     public Map<String, String> getReplaceClassMap() {
         return replaceClassMap;
+    }
+
+    public Map<String, Class<? extends Enum>> getEnumClassMap() {
+        return enumClassMap;
     }
 
     public Map<String, String> getConstantsMap() {

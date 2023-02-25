@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,26 +22,29 @@
  */
 package com.power.doc.handler;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 import com.power.common.util.StringUtil;
 import com.power.doc.builder.ProjectDocConfigBuilder;
 import com.power.doc.constants.DocTags;
 import com.power.doc.constants.JAXRSAnnotations;
+import com.power.doc.constants.JakartaJaxrsAnnotations;
 import com.power.doc.model.ApiReqParam;
 import com.power.doc.utils.DocClassUtil;
 import com.power.doc.utils.DocUtil;
 import com.thoughtworks.qdox.model.JavaAnnotation;
 import com.thoughtworks.qdox.model.JavaMethod;
 import com.thoughtworks.qdox.model.JavaParameter;
-import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import org.apache.commons.lang3.StringUtils;
 
 
 /**
  * Jaxrs Header Handler
+ *
  * @author Zxq
  */
 public class JaxrsHeaderHandler {
@@ -69,14 +72,16 @@ public class JaxrsHeaderHandler {
             for (JavaAnnotation annotation : annotations) {
                 String annotationName = annotation.getType().getFullyQualifiedName();
                 //Obtain header default value
-                if (JAXRSAnnotations.JAX_DEFAULT_VALUE_FULLY.equals(annotationName)) {
+                if (JakartaJaxrsAnnotations.JAX_DEFAULT_VALUE_FULLY.equals(annotationName)
+                    || JAXRSAnnotations.JAX_DEFAULT_VALUE_FULLY.equals(annotationName)) {
                     defaultValue = StringUtil.removeQuotes(DocUtil.getRequestHeaderValue(annotation));
                     defaultValue = DocUtil.handleConstants(constantsMap, defaultValue);
                 }
                 apiReqHeader.setValue(defaultValue);
 
                 // Obtain header value
-                if (JAXRSAnnotations.JAX_HEADER_PARAM_FULLY.equals(annotationName)) {
+                if (JakartaJaxrsAnnotations.JAX_HEADER_PARAM_FULLY.equals(annotationName)
+                    || JAXRSAnnotations.JAX_HEADER_PARAM_FULLY.equals(annotationName)) {
                     String name = StringUtil.removeQuotes(DocUtil.getRequestHeaderValue(annotation));
                     name = DocUtil.handleConstants(constantsMap, name);
                     apiReqHeader.setName(name);
@@ -102,8 +107,8 @@ public class JaxrsHeaderHandler {
             desc.append(paramComments);
             if (StringUtils.isNotBlank(defaultValue)) {
                 desc.append("(defaultValue: ")
-                        .append(defaultValue)
-                        .append(")");
+                    .append(defaultValue)
+                    .append(")");
             }
             return desc.toString();
         }

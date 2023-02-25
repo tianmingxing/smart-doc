@@ -1,6 +1,7 @@
 package com.power.doc.util;
 
 import com.power.doc.utils.DocPathUtil;
+
 import org.junit.jupiter.api.Test;
 
 /**
@@ -12,6 +13,6 @@ public class DocPathUtilTest {
     public void testMatches() {
         String pattern = "/app/page/**";
         String path = "/app/page/{pageIndex}/{pageSize}/{ag}";
-        System.out.println(DocPathUtil.matches(path,null,pattern));
+        System.out.println(DocPathUtil.matches(path, null, pattern));
     }
 }

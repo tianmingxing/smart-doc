@@ -1,7 +1,7 @@
 /*
  * smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -64,10 +64,8 @@ public class SourceCodePath {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("{");
-        sb.append("\"path\":\"")
-                .append(path).append('\"');
-        sb.append(",\"desc\":\"")
-                .append(desc).append('\"');
+        sb.append("\"path\":\"").append(path).append('\"');
+        sb.append(",\"desc\":\"").append(desc).append('\"');
         sb.append('}');
         return sb.toString();
     }

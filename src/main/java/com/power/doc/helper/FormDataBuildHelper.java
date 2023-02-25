@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,6 +22,12 @@
  */
 package com.power.doc.helper;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 import com.power.common.util.RandomUtil;
 import com.power.common.util.StringUtil;
 import com.power.doc.builder.ProjectDocConfigBuilder;
@@ -37,12 +43,6 @@ import com.power.doc.utils.JavaClassUtil;
 import com.power.doc.utils.JavaClassValidateUtil;
 import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaField;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author yu 2019/12/25.
@@ -60,7 +60,7 @@ public class FormDataBuildHelper {
      * @return list of FormData
      */
     public static List<FormData> getFormData(String className, Map<String, String> registryClasses, int counter
-            , ProjectDocConfigBuilder builder, String pre) {
+        , ProjectDocConfigBuilder builder, String pre) {
 
         if (StringUtil.isEmpty(className)) {
             throw new RuntimeException("Class name can't be null or empty.");
@@ -104,7 +104,6 @@ public class FormDataBuildHelper {
             formDataList.addAll(getFormData(gicName, registryClasses, counter, builder, pre + "[]"));
         }
         int n = 0;
-        out:
         for (DocJavaField docField : fields) {
             JavaField field = docField.getJavaField();
             String fieldName = field.getName();
@@ -112,7 +111,7 @@ public class FormDataBuildHelper {
             String fieldGicName = docField.getGenericCanonicalName();
             JavaClass javaClass = field.getType();
             if (field.isStatic() || "this$0".equals(fieldName) ||
-                    JavaClassValidateUtil.isIgnoreFieldTypes(subTypeName)) {
+                JavaClassValidateUtil.isIgnoreFieldTypes(subTypeName)) {
                 continue;
             }
             if (field.isTransient() && skipTransientField) {
@@ -123,16 +122,13 @@ public class FormDataBuildHelper {
             }
             Map<String, String> tagsMap = DocUtil.getFieldTagsValue(field, docField);
             if (tagsMap.containsKey(DocTags.IGNORE)) {
-                continue out;
+                continue;
             }
             String typeSimpleName = field.getType().getSimpleName();
             if (JavaClassValidateUtil.isMap(subTypeName)) {
                 continue;
             }
             String comment = docField.getComment();
-            if (StringUtil.isNotEmpty(comment)) {
-                comment = DocUtil.replaceNewLineToHtmlBr(comment);
-            }
             if (JavaClassValidateUtil.isFile(fieldGicName)) {
                 FormData formData = new FormData();
                 formData.setKey(pre + fieldName);
@@ -145,7 +141,7 @@ public class FormDataBuildHelper {
                 formData.setValue("");
                 formDataList.add(formData);
             } else if (JavaClassValidateUtil.isPrimitive(subTypeName)) {
-                String fieldValue = "";
+                String fieldValue;
                 if (tagsMap.containsKey(DocTags.MOCK) && StringUtil.isNotEmpty(tagsMap.get(DocTags.MOCK))) {
                     fieldValue = tagsMap.get(DocTags.MOCK);
                 } else {
@@ -154,7 +150,7 @@ public class FormDataBuildHelper {
                 CustomField customRequestField = builder.getCustomReqFieldMap().get(fieldName);
                 // cover request value
                 if (Objects.nonNull(customRequestField) && Objects.nonNull(customRequestField.getValue())
-                        && JavaClassUtil.isTargetChildClass(simpleName, customRequestField.getOwnerClassName())) {
+                    && JavaClassUtil.isTargetChildClass(simpleName, customRequestField.getOwnerClassName())) {
                     fieldValue = String.valueOf(customRequestField.getValue());
                 }
                 FormData formData = new FormData();
@@ -174,19 +170,33 @@ public class FormDataBuildHelper {
                 formData.setValue(StringUtil.removeQuotes(String.valueOf(value)));
                 formData.setDescription(comment);
                 formDataList.add(formData);
-            } else if (JavaClassValidateUtil.isCollection(subTypeName)) {
+            } else if (JavaClassValidateUtil.isCollection(subTypeName) || JavaClassValidateUtil.isArray(subTypeName)) {
                 String gNameTemp = field.getType().getGenericCanonicalName();
                 String[] gNameArr = DocClassUtil.getSimpleGicName(gNameTemp);
                 if (gNameArr.length == 0) {
-                    continue out;
+                    continue;
                 }
                 String gName = DocClassUtil.getSimpleGicName(gNameTemp)[0];
-                if (!JavaClassValidateUtil.isPrimitive(gName)) {
-                    if (!simpleName.equals(gName) && !gName.equals(simpleName)) {
+                if (JavaClassValidateUtil.isPrimitive(gName)) {
+                    String fieldValue;
+                    if (tagsMap.containsKey(DocTags.MOCK) && StringUtil.isNotEmpty(tagsMap.get(DocTags.MOCK))) {
+                        fieldValue = tagsMap.get(DocTags.MOCK);
+                    } else {
+                        String val = DocUtil.getValByTypeAndFieldName(gName, field.getName());
+                        fieldValue = val + "," + val;
+                    }
+                    FormData formData = new FormData();
+                    formData.setKey(pre + fieldName);
+                    formData.setType("text");
+                    formData.setValue(fieldValue);
+                    formData.setDescription(comment);
+                    formDataList.add(formData);
+                } else {
+                    if (!simpleName.equals(gName)) {
                         if (gName.length() == 1) {
                             int len = globGicName.length;
                             if (len > 0) {
-                                String gicName = (n < len) ? globGicName[n] : globGicName[len - 1];
+                                String gicName = globGicName[n];
                                 if (!JavaClassValidateUtil.isPrimitive(gicName) && !simpleName.equals(gicName)) {
                                     formDataList.addAll(getFormData(gicName, registryClasses, counter, builder, pre + fieldName + "[0]."));
                                 }
@@ -203,7 +213,6 @@ public class FormDataBuildHelper {
 //                    formDataList.addAll(getFormData(gicName, registryClasses, counter, builder, pre + fieldName + "."));
 //                }
 //                n++;
-                continue;
             } else {
                 formDataList.addAll(getFormData(fieldGicName, registryClasses, counter, builder, pre + fieldName + "."));
             }

@@ -1,7 +1,7 @@
 /*
  * smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -57,9 +57,9 @@ public class ApiObjectReplacement {
     public String toString() {
         final StringBuilder sb = new StringBuilder("{");
         sb.append("\"className\":\"")
-                .append(className).append('\"');
+            .append(className).append('\"');
         sb.append(",\"replacementClassName\":\"")
-                .append(replacementClassName).append('\"');
+            .append(replacementClassName).append('\"');
         sb.append('}');
         return sb.toString();
     }

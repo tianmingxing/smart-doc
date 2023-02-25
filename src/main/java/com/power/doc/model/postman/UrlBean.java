@@ -1,7 +1,7 @@
 /*
  * smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,13 +22,13 @@
  */
 package com.power.doc.model.postman;
 
-import com.power.common.util.StringUtil;
-import com.power.doc.model.postman.request.ParamBean;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.power.common.util.StringUtil;
+import com.power.doc.model.postman.request.ParamBean;
 
 /**
  * post

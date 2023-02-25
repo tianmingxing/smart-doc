@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,13 +22,14 @@
  */
 package com.power.doc.utils;
 
-import com.power.common.util.PathUtil;
-import com.power.common.util.StringUtil;
-import org.apache.commons.lang3.StringUtils;
-
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+
+import com.power.common.util.PathUtil;
+import com.power.common.util.StringUtil;
+
+import org.apache.commons.lang3.StringUtils;
 
 public class DocPathUtil {
 
@@ -82,6 +83,6 @@ public class DocPathUtil {
         if (StringUtil.isNotEmpty(excludePatterns)) {
             excludePatternList = Arrays.asList(excludePatterns.split(",", 0));
         }
-        return PathUtil.matches(lookupPath,includePatternList,excludePatternList);
+        return PathUtil.matches(lookupPath, includePatternList, excludePatternList);
     }
 }

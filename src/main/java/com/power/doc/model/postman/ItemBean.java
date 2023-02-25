@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,14 +22,15 @@
  */
 package com.power.doc.model.postman;
 
-import com.power.doc.model.postman.request.RequestBean;
-
 import java.util.List;
+
+import com.power.doc.model.postman.request.RequestBean;
 
 /**
  * @author xingzi
  */
 public class ItemBean {
+
     private String name;
     private RequestBean request;
     private List<ItemBean> item;

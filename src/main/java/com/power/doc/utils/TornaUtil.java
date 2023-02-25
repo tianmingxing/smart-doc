@@ -1,30 +1,69 @@
 package com.power.doc.utils;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.power.common.model.EnumDictionary;
-import com.power.common.util.CollectionUtil;
-import com.power.common.util.StringUtil;
-import com.power.doc.constants.DocGlobalConstants;
-import com.power.doc.constants.TornaConstants;
-import com.power.doc.model.*;
-import com.power.doc.model.rpc.RpcApiDependency;
-import com.power.doc.model.torna.*;
-import com.thoughtworks.qdox.model.JavaClass;
-import com.thoughtworks.qdox.model.JavaParameter;
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.power.common.model.EnumDictionary;
+import com.power.common.util.CollectionUtil;
+import com.power.common.util.OkHttp3Util;
+import com.power.common.util.StringUtil;
+import com.power.doc.constants.DocGlobalConstants;
+import com.power.doc.constants.TornaConstants;
+import com.power.doc.model.ApiConfig;
+import com.power.doc.model.ApiDocDict;
+import com.power.doc.model.ApiErrorCode;
+import com.power.doc.model.ApiMethodDoc;
+import com.power.doc.model.ApiParam;
+import com.power.doc.model.ApiReqParam;
+import com.power.doc.model.DataDict;
+import com.power.doc.model.RpcJavaMethod;
+import com.power.doc.model.rpc.RpcApiDependency;
+import com.power.doc.model.torna.Apis;
+import com.power.doc.model.torna.CommonErrorCode;
+import com.power.doc.model.torna.DebugEnv;
+import com.power.doc.model.torna.HttpParam;
+import com.power.doc.model.torna.TornaApi;
+import com.power.doc.model.torna.TornaDic;
+import com.power.doc.model.torna.TornaRequestInfo;
+import com.thoughtworks.qdox.JavaProjectBuilder;
+
+import com.thoughtworks.qdox.model.JavaMethod;
+import com.thoughtworks.qdox.model.JavaParameter;
+import org.apache.commons.lang3.StringUtils;
+
+import static com.power.doc.constants.DocGlobalConstants.ARRAY;
 import static com.power.doc.constants.DocGlobalConstants.OBJECT;
+import static com.power.doc.constants.TornaConstants.ENUM_PUSH;
+import static com.power.doc.constants.TornaConstants.PUSH;
 
 /**
  * @author xingzi 2021/4/28 16:15
  **/
 public class TornaUtil {
+
+    public static void pushToTorna(TornaApi tornaApi, ApiConfig apiConfig, JavaProjectBuilder builder) {
+        //Build push document information
+        Map<String, String> requestJson = TornaConstants.buildParams(PUSH, new Gson().toJson(tornaApi), apiConfig);
+        //Push dictionary information
+        Map<String, Object> dicMap = new HashMap<>(2);
+        List<TornaDic> docDicts = TornaUtil.buildTornaDic(DocUtil.buildDictionary(apiConfig, builder));
+        if (CollectionUtil.isNotEmpty(docDicts)) {
+            dicMap.put("enums", docDicts);
+            Map<String, String> dicRequestJson = TornaConstants.buildParams(ENUM_PUSH, new Gson().toJson(dicMap), apiConfig);
+            String dicResponseMsg = OkHttp3Util.syncPostJson(apiConfig.getOpenUrl(), new Gson().toJson(dicRequestJson));
+            TornaUtil.printDebugInfo(apiConfig, dicResponseMsg, dicRequestJson, ENUM_PUSH);
+        }
+        //Get the response result
+        String responseMsg = OkHttp3Util.syncPostJson(apiConfig.getOpenUrl(), new Gson().toJson(requestJson));
+        //Print the log of pushing documents to Torna
+        TornaUtil.printDebugInfo(apiConfig, responseMsg, requestJson, PUSH);
+    }
 
     public static boolean setDebugEnv(ApiConfig apiConfig, TornaApi tornaApi) {
         boolean hasDebugEnv = StringUtils.isNotBlank(apiConfig.getDebugEnvName())
@@ -62,9 +101,9 @@ public class TornaUtil {
                         .setRequestInfo(requestJson)
                         .setResponseInfo(responseMsg);
                 System.out.println(info.buildInfo());
-            }catch (Exception e){
+            } catch (Exception e) {
                 //Ex : Nginx Error,Tomcat Error
-                System.out.println("Response Error : \n"+ responseMsg);
+                System.out.println("Response Error : \n" + responseMsg);
             }
         }
     }
@@ -99,14 +138,14 @@ public class TornaUtil {
             methodApi.setIsResponseArray(apiMethodDoc.getIsResponseArray());
             methodApi.setRequestArrayType(apiMethodDoc.getRequestArrayType());
             methodApi.setResponseArrayType(apiMethodDoc.getResponseArrayType());
-            methodApi.setDeprecated(apiMethodDoc.isDeprecated() ? "该接口已废弃" : null);
+            methodApi.setDeprecated(apiMethodDoc.isDeprecated() ? "Deprecated" : null);
             //Path
             if (CollectionUtil.isNotEmpty(apiMethodDoc.getPathParams())) {
                 methodApi.setPathParams(buildParams(apiMethodDoc.getPathParams()));
             }
 
             if (CollectionUtil.isNotEmpty(apiMethodDoc.getQueryParams())
-                    && DocGlobalConstants.MULTIPART_TYPE.equals(apiMethodDoc.getContentType())) {
+                    && DocGlobalConstants.FILE_CONTENT_TYPE.equals(apiMethodDoc.getContentType())) {
                 // file upload
                 methodApi.setRequestParams(buildParams(apiMethodDoc.getQueryParams()));
             } else if (CollectionUtil.isNotEmpty(apiMethodDoc.getQueryParams())) {
@@ -127,12 +166,12 @@ public class TornaUtil {
      * @param apiMethodDocs apiMethodDocs
      * @return List of Api
      */
-    public static List<Apis> buildDubboApis(List<JavaMethodDoc> apiMethodDocs) {
+    public static List<Apis> buildDubboApis(List<RpcJavaMethod> apiMethodDocs) {
         //Parameter list
         List<Apis> apis = new ArrayList<>();
         Apis methodApi;
         //Iterative classification interface
-        for (JavaMethodDoc apiMethodDoc : apiMethodDocs) {
+        for (RpcJavaMethod apiMethodDoc : apiMethodDocs) {
             methodApi = new Apis();
             methodApi.setIsFolder(TornaConstants.NO);
             methodApi.setName(apiMethodDoc.getDesc());
@@ -166,7 +205,11 @@ public class TornaUtil {
             httpParam.setName(header.getName());
             httpParam.setRequired(header.isRequired() ? TornaConstants.YES : TornaConstants.NO);
             httpParam.setExample(StringUtil.removeQuotes(header.getValue()));
-            httpParam.setDescription(header.getDesc());
+            if (StringUtil.isNotEmpty(header.getSince()) && !DocGlobalConstants.DEFAULT_VERSION.equals(header.getSince())) {
+                httpParam.setDescription(header.getDesc() + "@since " + header.getSince());
+            } else {
+                httpParam.setDescription(header.getDesc());
+            }
             headers.add(httpParam);
         }
         return headers;
@@ -193,7 +236,12 @@ public class TornaUtil {
             httpParam.setType(type);
             httpParam.setRequired(apiParam.isRequired() ? TornaConstants.YES : TornaConstants.NO);
             httpParam.setExample(StringUtil.removeQuotes(apiParam.getValue()));
-            httpParam.setDescription(apiParam.getDesc());
+            if (StringUtil.isNotEmpty(apiParam.getVersion()) && !DocGlobalConstants.DEFAULT_VERSION.equals(apiParam.getVersion())) {
+                httpParam.setDescription(DocUtil.replaceNewLineToHtmlBr(apiParam.getDesc()) + "@since " + apiParam.getVersion());
+            } else {
+                httpParam.setDescription(DocUtil.replaceNewLineToHtmlBr(apiParam.getDesc()));
+            }
+            httpParam.setEnumInfo(apiParam.getEnumInfo());
             if (apiParam.getChildren() != null) {
                 httpParam.setChildren(buildParams(apiParam.getChildren()));
             }
@@ -206,23 +254,22 @@ public class TornaUtil {
         StringBuilder s = new StringBuilder();
         if (CollectionUtil.isNotEmpty(dependencies)) {
             for (RpcApiDependency r : dependencies) {
-                s.append(r.toString())
-                        .append("\n\n");
+                s.append(r.toString()).append("\n\n");
             }
         }
         return s.toString();
     }
 
-    public static List<CommonErrorCode> buildErrorCode(ApiConfig config) {
+    public static List<CommonErrorCode> buildErrorCode(ApiConfig config, JavaProjectBuilder javaProjectBuilder) {
         List<CommonErrorCode> commonErrorCodes = new ArrayList<>();
         CommonErrorCode commonErrorCode;
-        List<ApiErrorCode> errorCodes = DocUtil.errorCodeDictToList(config);
+        List<ApiErrorCode> errorCodes = DocUtil.errorCodeDictToList(config, javaProjectBuilder);
         if (CollectionUtil.isNotEmpty(errorCodes)) {
             for (EnumDictionary code : errorCodes) {
                 commonErrorCode = new CommonErrorCode();
                 commonErrorCode.setCode(code.getValue());
                 // commonErrorCode.setSolution(code.getDesc());
-                commonErrorCode.setMsg(code.getDesc());
+                commonErrorCode.setMsg(DocUtil.replaceNewLineToHtmlBr(code.getDesc()));
                 commonErrorCodes.add(commonErrorCode);
             }
         }
@@ -236,7 +283,7 @@ public class TornaUtil {
             for (ApiDocDict doc : apiDocDicts) {
                 tornaDic = new TornaDic();
                 tornaDic.setName(doc.getTitle())
-                        // .setDescription(doc.getTitle())
+                        .setDescription(DocUtil.replaceNewLineToHtmlBr(doc.getDescription()))
                         .setItems(buildTornaDicItems(doc.getDataDictList()));
                 dics.add(tornaDic);
             }
@@ -254,7 +301,6 @@ public class TornaUtil {
                 api.setType(d.getType());
                 api.setValue(d.getValue());
                 api.setDescription(d.getDesc());
-
                 apis.add(api);
             }
         }
@@ -262,48 +308,48 @@ public class TornaUtil {
     }
 
     /**
-     * set torna responseArray
-     * @param javaParameters params
-     * @param apiMethodDoc methodDoc
-     * @param returnClass return class
-     * @param apiConfig config
+     * 设置请求参数是否为数组
+     *
+     * @param apiMethodDoc 请求参数
      */
-    public static void setTornaArrayTags(List<JavaParameter> javaParameters, ApiMethodDoc apiMethodDoc, JavaClass returnClass, ApiConfig apiConfig) {
-
-        apiMethodDoc.setIsResponseArray(0);
+    public static void setTornaArrayTags(JavaMethod method, ApiMethodDoc apiMethodDoc) {
+        String returnTypeName = method.getReturnType().getCanonicalName();
         apiMethodDoc.setIsRequestArray(0);
-        //response tags
-        if ((JavaClassValidateUtil.isCollection(returnClass.getFullyQualifiedName()) ||
-                JavaClassValidateUtil.isArray(returnClass.getFullyQualifiedName())) &&
-                apiConfig.getResponseBodyAdvice() == null) {
+        apiMethodDoc.setIsResponseArray(0);
+        boolean respArray = JavaClassValidateUtil.isCollection(returnTypeName) || JavaClassValidateUtil.isArray(returnTypeName);
+        //response
+        if (respArray) {
             apiMethodDoc.setIsResponseArray(1);
-            String gicType;
-            String simpleGicType;
-            String typeName = returnClass.getGenericFullyQualifiedName();
-            gicType = getType(typeName);
-            simpleGicType = gicType.substring(gicType.lastIndexOf(".") + 1).toLowerCase();
-            apiMethodDoc.setResponseArrayType(JavaClassValidateUtil.isPrimitive(gicType) ? simpleGicType : OBJECT);
+            apiMethodDoc.setResponseArrayType(getType(method.getReturnType().getGenericCanonicalName()));
         }
-        //request tags
-        if (CollectionUtil.isNotEmpty(javaParameters) && apiConfig.getRequestBodyAdvice() == null) {
-            for (JavaParameter parameter : javaParameters) {
-                String gicType;
-                String simpleGicType;
-                String typeName = parameter.getType().getGenericFullyQualifiedName();
-                String name = parameter.getType().getFullyQualifiedName();
-                gicType = getType(typeName);
-                simpleGicType = gicType.substring(gicType.lastIndexOf(".") + 1).toLowerCase();
-                // is array
-                if (JavaClassValidateUtil.isCollection(name) || JavaClassValidateUtil.isArray(name)) {
+        //request
+        if (CollectionUtil.isNotEmpty(method.getParameters())) {
+            for (JavaParameter param : method.getParameters()) {
+                String typeName = param.getType().getCanonicalName();
+                boolean reqArray = JavaClassValidateUtil.isCollection(typeName) || JavaClassValidateUtil.isArray(typeName);
+                if (reqArray) {
                     apiMethodDoc.setIsRequestArray(1);
-                    if (JavaClassValidateUtil.isPrimitive(gicType)) {
-                        apiMethodDoc.setRequestArrayType(simpleGicType);
-                    } else {
-                        apiMethodDoc.setRequestArrayType(OBJECT);
-                    }
+                    apiMethodDoc.setRequestArrayType(getType(param.getType().getGenericCanonicalName()));
+                    break;
                 }
             }
         }
+
+    }
+
+    private static String getArrayType(Map<String, Object> schemaMap) {
+        String arrayType = null;
+        if (Objects.nonNull(schemaMap) && Objects.equals(ARRAY, schemaMap.get("type"))) {
+            Map<String, Object> innerSchemeMap = (Map<String, Object>) schemaMap.get("items");
+            if (Objects.nonNull(innerSchemeMap)) {
+                String type = (String) innerSchemeMap.get("type");
+                if (StringUtil.isNotEmpty(type)) {
+                    String className = getType(type);
+                    arrayType = JavaClassValidateUtil.isPrimitive(className) ? className : OBJECT;
+                }
+            }
+        }
+        return arrayType;
     }
 
     private static String getType(String typeName) {
@@ -317,19 +363,16 @@ public class TornaUtil {
         if (gicType.contains("[")) {
             gicType = gicType.substring(0, gicType.indexOf("["));
         }
-        return gicType;
+        return gicType.substring(gicType.lastIndexOf(".") + 1).toLowerCase();
     }
 
     private static String subFirstUrlOrPath(String url) {
-
         if (StringUtil.isEmpty(url)) {
             return StringUtil.EMPTY;
         }
-
         if (!url.contains(DocGlobalConstants.MULTI_URL_SEPARATOR)) {
             return url;
         }
-
         String[] split = StringUtil.split(url, DocGlobalConstants.MULTI_URL_SEPARATOR);
         return split[0];
     }

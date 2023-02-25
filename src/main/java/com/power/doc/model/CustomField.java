@@ -1,7 +1,7 @@
 /*
  * smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,10 +22,14 @@
  */
 package com.power.doc.model;
 
+import java.util.Map;
+import java.util.Objects;
+
 /**
  * @author xingzi
  **/
 public class CustomField {
+
     /**
      * field name
      */
@@ -51,6 +55,19 @@ public class CustomField {
 
     private String replaceName;
 
+    public static CustomField builder() {
+        return new CustomField();
+    }
+
+    public static CustomField nameEquals(Key key, Map<Key, CustomField> customFieldMap) {
+        for (Map.Entry<Key, CustomField> c : customFieldMap.entrySet()) {
+            if (key.equals(c.getKey())) {
+                return c.getValue();
+            }
+        }
+        return null;
+    }
+
     public String getReplaceName() {
         return replaceName;
     }
@@ -58,10 +75,6 @@ public class CustomField {
     public CustomField setReplaceName(String replaceName) {
         this.replaceName = replaceName;
         return this;
-    }
-
-    public static CustomField builder() {
-        return new CustomField();
     }
 
     public boolean isRequire() {
@@ -116,5 +129,40 @@ public class CustomField {
     public CustomField setIgnore(boolean ignore) {
         this.ignore = ignore;
         return this;
+    }
+
+    public static final class Key {
+
+        /**
+         * owner class
+         */
+        private String ownerClassName;
+
+        /**
+         * field name
+         */
+        private String name;
+
+        private Key(String ownerClassName, String name) {
+            this.ownerClassName = ownerClassName;
+            this.name = name;
+        }
+
+        public static Key create(String className, String fieldName) {
+            return new Key(className, fieldName);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Key key = (Key) o;
+            return Objects.equals(ownerClassName, key.ownerClassName) && Objects.equals(name, key.name);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(ownerClassName, name);
+        }
     }
 }

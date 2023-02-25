@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -20,14 +20,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.power.doc.model.rpc;
+package com.power.doc.function;
 
-import com.power.doc.model.JavaMethodDoc;
+import com.power.common.util.HtmlUtil;
+
+import org.beetl.core.Context;
+import org.beetl.core.Function;
 
 /**
- * @author yu 2020/5/16.
+ * beetl template function
+ * @author yu 2022/10/3.
  */
-public class RpcApiMethodDoc extends JavaMethodDoc {
+public class LineBreaksToBr implements Function {
 
-
+    @Override
+    public String call(Object[] paras, Context ctx) {
+        String str = String.valueOf(paras[0]);
+        return HtmlUtil.lineBreaksToBr(str);
+    }
 }

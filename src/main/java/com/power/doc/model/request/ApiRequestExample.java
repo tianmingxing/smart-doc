@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,11 +22,12 @@
  */
 package com.power.doc.model.request;
 
+import java.util.List;
+
 import com.power.common.util.StringUtil;
 import com.power.doc.model.FormData;
-import org.apache.commons.lang3.StringUtils;
 
-import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author yu 2019/12/22.

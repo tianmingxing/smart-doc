@@ -1,7 +1,7 @@
 /*
  * smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -23,11 +23,11 @@
 package com.power.doc.model;
 
 
-import com.power.common.util.StringUtil;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import com.power.common.util.StringUtil;
 
 public class ApiDoc implements Comparable<ApiDoc> {
 
@@ -66,7 +66,6 @@ public class ApiDoc implements Comparable<ApiDoc> {
 
     /**
      * class in package name
-     *
      */
     private String packageName;
 
@@ -88,14 +87,39 @@ public class ApiDoc implements Comparable<ApiDoc> {
     private String author;
 
     /**
-     *  if this is group, then is true
+     * if this is group, then is true
      */
     private boolean isFolder;
 
     /**
-     *  children
+     * children
      */
     private List<ApiDoc> childrenApiDocs = new ArrayList<>();
+
+    public static ApiDoc buildTagApiDoc(ApiDoc source, String tag, ApiMethodDoc methodDoc) {
+        ApiDoc apiDoc = new ApiDoc();
+        apiDoc.setAlias(source.getAlias());
+        apiDoc.setLink(source.getLink());
+        apiDoc.setDesc(tag);
+        apiDoc.setAuthor(source.getAuthor());
+        apiDoc.setPackageName(source.getPackageName());
+        apiDoc.setName(tag);
+        apiDoc.setList(new ArrayList<>());
+        ApiMethodDoc clone = methodDoc.clone();
+        clone.setOrder(apiDoc.getList().size() + 1);
+        apiDoc.getList().add(clone);
+        return apiDoc;
+    }
+
+    public static ApiDoc buildGroupApiDoc(String group) {
+        ApiDoc apiDoc = new ApiDoc();
+        apiDoc.setFolder(true);
+        apiDoc.setGroup(group);
+        apiDoc.setName(group);
+        apiDoc.setDesc(group);
+        apiDoc.setChildrenApiDocs(new ArrayList<>());
+        return apiDoc;
+    }
 
     public String getAuthor() {
         return author;
@@ -204,45 +228,19 @@ public class ApiDoc implements Comparable<ApiDoc> {
         return name.compareTo(o.getName());
     }
 
-    public static ApiDoc buildTagApiDoc(ApiDoc source, String tag, ApiMethodDoc methodDoc) {
-        ApiDoc apiDoc = new ApiDoc();
-        apiDoc.setAlias(source.getAlias());
-        apiDoc.setLink(source.getLink());
-        apiDoc.setDesc(tag);
-        apiDoc.setAuthor(source.getAuthor());
-        apiDoc.setPackageName(source.getPackageName());
-        apiDoc.setName(tag);
-        apiDoc.setList(new ArrayList<>());
-        ApiMethodDoc clone = methodDoc.clone();
-        clone.setOrder(apiDoc.getList().size() + 1);
-        apiDoc.getList().add(clone);
-        return apiDoc;
-    }
-
-
-    public static ApiDoc buildGroupApiDoc(String group) {
-        ApiDoc apiDoc = new ApiDoc();
-        apiDoc.setFolder(true);
-        apiDoc.setGroup(group);
-        apiDoc.setName(group);
-        apiDoc.setDesc(group);
-        apiDoc.setChildrenApiDocs(new ArrayList<>());
-        return apiDoc;
-    }
-
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("{");
         sb.append("\"order\":")
-                .append(order);
+            .append(order);
         sb.append(",\"name\":\"")
-                .append(name).append('\"');
+            .append(name).append('\"');
         sb.append(",\"alias\":\"")
-                .append(alias).append('\"');
+            .append(alias).append('\"');
         sb.append(",\"list\":")
-                .append(list);
+            .append(list);
         sb.append(",\"desc\":\"")
-                .append(desc).append('\"');
+            .append(desc).append('\"');
         sb.append('}');
         return sb.toString();
     }

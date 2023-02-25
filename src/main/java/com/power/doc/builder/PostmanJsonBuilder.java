@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,6 +22,11 @@
  */
 package com.power.doc.builder;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
 import com.power.common.util.CollectionUtil;
 import com.power.common.util.FileUtil;
 import com.power.common.util.StringUtil;
@@ -29,7 +34,12 @@ import com.power.doc.constants.DocGlobalConstants;
 import com.power.doc.constants.Methods;
 import com.power.doc.factory.BuildTemplateFactory;
 import com.power.doc.helper.JavaProjectBuilderHelper;
-import com.power.doc.model.*;
+import com.power.doc.model.ApiConfig;
+import com.power.doc.model.ApiDoc;
+import com.power.doc.model.ApiMethodDoc;
+import com.power.doc.model.ApiParam;
+import com.power.doc.model.ApiReqParam;
+import com.power.doc.model.FormData;
 import com.power.doc.model.postman.InfoBean;
 import com.power.doc.model.postman.ItemBean;
 import com.power.doc.model.postman.RequestItem;
@@ -42,11 +52,6 @@ import com.power.doc.template.IDocBuildTemplate;
 import com.power.doc.utils.DocPathUtil;
 import com.power.doc.utils.JsonUtil;
 import com.thoughtworks.qdox.JavaProjectBuilder;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
 
 
 /**
@@ -78,6 +83,9 @@ public class PostmanJsonBuilder {
     public static void buildPostmanCollection(ApiConfig config, JavaProjectBuilder projectBuilder) {
         DocBuilderTemplate builderTemplate = new DocBuilderTemplate();
         builderTemplate.checkAndInit(config, false);
+        if (StringUtil.isNotEmpty(config.getServerEnv())) {
+            config.setServerUrl(config.getServerEnv());
+        }
         config.setParamsDataToTree(false);
         ProjectDocConfigBuilder configBuilder = new ProjectDocConfigBuilder(config, projectBuilder);
         postManCreate(config, configBuilder);
@@ -95,10 +103,10 @@ public class PostmanJsonBuilder {
         List<ItemBean> itemBeans = new ArrayList<>();
         List<ApiMethodDoc> apiMethodDocs = apiDoc.getList();
         apiMethodDocs.forEach(
-                apiMethodDoc -> {
-                    ItemBean itemBean1 = buildItem(apiMethodDoc);
-                    itemBeans.add(itemBean1);
-                }
+            apiMethodDoc -> {
+                ItemBean itemBean1 = buildItem(apiMethodDoc);
+                itemBeans.add(itemBean1);
+            }
         );
         itemBean.setItem(itemBeans);
         return itemBean;
@@ -156,7 +164,7 @@ public class PostmanJsonBuilder {
 
         List<ParamBean> queryParams = new ArrayList<>();
         if (!apiMethodDoc.getType().equals(Methods.POST.getValue()) ||
-                apiMethodDoc.getContentType().contains(DocGlobalConstants.JSON_CONTENT_TYPE)) {
+            apiMethodDoc.getContentType().contains(DocGlobalConstants.JSON_CONTENT_TYPE)) {
             for (ApiParam apiParam : apiMethodDoc.getQueryParams()) {
                 ParamBean queryParam = new ParamBean();
                 queryParam.setDescription(apiParam.getDesc());
@@ -166,7 +174,6 @@ public class PostmanJsonBuilder {
             }
         }
         urlBean.setQuery(queryParams);
-
 
         List<ParamBean> variables = new ArrayList<>();
         for (ApiParam apiParam : apiMethodDoc.getPathParams()) {
@@ -229,31 +236,31 @@ public class PostmanJsonBuilder {
         List<HeaderBean> headerBeans = new ArrayList<>();
         List<ApiReqParam> headers = apiMethodDoc.getRequestHeaders();
         headers.forEach(
-                apiReqHeader -> {
-                    HeaderBean headerBean = new HeaderBean();
-                    headerBean.setKey(apiReqHeader.getName());
-                    headerBean.setName(apiReqHeader.getName());
-                    headerBean.setValue(apiReqHeader.getValue());
-                    headerBean.setDisabled(!apiReqHeader.isRequired());
-                    headerBean.setDescription(apiReqHeader.getDesc());
-                    headerBeans.add(headerBean);
-                }
+            apiReqHeader -> {
+                HeaderBean headerBean = new HeaderBean();
+                headerBean.setKey(apiReqHeader.getName());
+                headerBean.setName(apiReqHeader.getName());
+                headerBean.setValue(apiReqHeader.getValue());
+                headerBean.setDisabled(!apiReqHeader.isRequired());
+                headerBean.setDescription(apiReqHeader.getDesc());
+                headerBeans.add(headerBean);
+            }
         );
 
         return headerBeans;
     }
 
     private static void postManCreate(ApiConfig config, ProjectDocConfigBuilder configBuilder) {
-        IDocBuildTemplate docBuildTemplate = BuildTemplateFactory.getDocBuildTemplate(config.getFramework());
+        IDocBuildTemplate<ApiDoc> docBuildTemplate = BuildTemplateFactory.getDocBuildTemplate(config.getFramework());
         List<ApiDoc> apiDocList = docBuildTemplate.getApiData(configBuilder);
         RequestItem requestItem = new RequestItem();
         requestItem.setInfo(new InfoBean(config.getProjectName()));
         List<ItemBean> itemBeans = new ArrayList<>();
         apiDocList.forEach(
-                apiDoc -> {
-                    ItemBean itemBean = buildItemBean(apiDoc);
-                    itemBeans.add(itemBean);
-                }
+            apiDoc -> {
+                ItemBean itemBean = buildItemBean(apiDoc);
+                itemBeans.add(itemBean);
+            }
         );
         requestItem.setItem(itemBeans);
         String filePath = config.getOutPath();

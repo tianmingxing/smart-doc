@@ -1,7 +1,7 @@
 /*
  * smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,15 +22,23 @@
  */
 package com.power.doc.model;
 
+import java.util.List;
+
 import com.power.doc.model.torna.EnumInfo;
 
-import java.util.List;
+import org.apache.commons.lang3.StringUtils;
+
+import static com.power.doc.constants.DocGlobalConstants.PARAM_PREFIX;
 
 /**
  * @author yu 2019/9/27.
  */
 public class ApiParam {
 
+    /**
+     * param class name
+     */
+    private String className;
     /**
      * field id
      */
@@ -98,15 +106,15 @@ public class ApiParam {
     /**
      * enum
      */
-    private List<EnumInfo> enumInfo;
+    private EnumInfo enumInfo;
     /**
      * Valid @Max
      */
     private String maxLength;
 
     /**
-     *  is config.json config param
-     *  default false
+     * is config.json config param
+     * default false
      */
     private boolean configParam;
     /**
@@ -118,11 +126,11 @@ public class ApiParam {
         return new ApiParam();
     }
 
-    public List<EnumInfo> getEnumInfo() {
+    public EnumInfo getEnumInfo() {
         return enumInfo;
     }
 
-    public ApiParam setEnumInfo(List<EnumInfo> enumInfo) {
+    public ApiParam setEnumInfo(EnumInfo enumInfo) {
         this.enumInfo = enumInfo;
         return this;
     }
@@ -134,6 +142,13 @@ public class ApiParam {
     public ApiParam setField(String field) {
         this.field = field;
         return this;
+    }
+
+    public String getSourceField() {
+        if (StringUtils.isEmpty(field)) {
+            return StringUtils.EMPTY;
+        }
+        return field.replaceAll(PARAM_PREFIX, "").replaceAll("&nbsp;", "");
     }
 
     public String getType() {
@@ -262,6 +277,15 @@ public class ApiParam {
         return this;
     }
 
+    public String getClassName() {
+        return className;
+    }
+
+    public ApiParam setClassName(String className) {
+        this.className = className;
+        return this;
+    }
+
     public boolean isSelfReferenceLoop() {
         return selfReferenceLoop;
     }
@@ -273,23 +297,23 @@ public class ApiParam {
     @Override
     public String toString() {
         return "ApiParam{" +
-                "id=" + id +
-                ", field='" + field + '\'' +
-                ", type='" + type + '\'' +
-                ", desc='" + desc + '\'' +
-                ", required=" + required +
-                ", version='" + version + '\'' +
-                ", pid=" + pid +
-                ", pathParam=" + pathParam +
-                ", queryParam=" + queryParam +
-                ", value='" + value + '\'' +
-                ", children=" + children +
-                ", hasItems=" + hasItems +
-                ", enumValues=" + enumValues +
-                ", enumInfo=" + enumInfo +
-                ", maxLength='" + maxLength + '\'' +
-                ", configParam=" + configParam +
-                ", selfReferenceLoop=" + selfReferenceLoop +
-                '}';
+            "id=" + id +
+            ", field='" + field + '\'' +
+            ", type='" + type + '\'' +
+            ", desc='" + desc + '\'' +
+            ", required=" + required +
+            ", version='" + version + '\'' +
+            ", pid=" + pid +
+            ", pathParam=" + pathParam +
+            ", queryParam=" + queryParam +
+            ", value='" + value + '\'' +
+            ", children=" + children +
+            ", hasItems=" + hasItems +
+            ", enumValues=" + enumValues +
+            ", enumInfo=" + enumInfo +
+            ", maxLength='" + maxLength + '\'' +
+            ", configParam=" + configParam +
+            ", selfReferenceLoop=" + selfReferenceLoop +
+            '}';
     }
 }

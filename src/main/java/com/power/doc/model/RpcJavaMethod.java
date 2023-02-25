@@ -1,7 +1,7 @@
 /*
  * smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -25,9 +25,10 @@ package com.power.doc.model;
 import java.util.List;
 
 /**
+ * for rpc
  * @author yu 2020/1/29.
  */
-public class JavaMethodDoc {
+public class RpcJavaMethod {
 
     /**
      * methodId handled by md5

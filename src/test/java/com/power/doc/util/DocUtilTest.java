@@ -1,12 +1,15 @@
 package com.power.doc.util;
 
-import com.power.doc.constants.DocGlobalConstants;
-import com.power.doc.constants.DocLanguage;
-import com.power.doc.utils.DocUtil;
-import org.junit.jupiter.api.Test;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import com.power.doc.constants.DocGlobalConstants;
+import com.power.doc.constants.DocLanguage;
+import com.power.doc.enums.IEnum;
+import com.power.doc.enums.OrderEnum;
+import com.power.doc.utils.DocUtil;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * @author yu 2018/12/10.
@@ -20,7 +23,7 @@ public class DocUtilTest {
         System.out.println(str);
     }
 
-   /* @Test*/
+    /* @Test*/
     public void testFormatAndRemove() {
         System.setProperty(DocGlobalConstants.DOC_LANGUAGE, DocLanguage.CHINESE.getCode());
         Map<String, String> params = new HashMap<>();
@@ -35,11 +38,23 @@ public class DocUtilTest {
     }
 
     @Test
-    public void testIsMatch(){
+    public void testGetInterfacesEnum() throws ClassNotFoundException {
+        System.out.println(IEnum.class.isAssignableFrom(OrderEnum.class));
+    }
+
+    @Test
+    public void testIsMatch() {
         System.setProperty(DocGlobalConstants.DOC_LANGUAGE, DocLanguage.CHINESE.getCode());
         String pattern = "com.aaa.*.controller";
         String controllerName = "com.aaa.cc.controlle";
 
-        System.out.println(DocUtil.isMatch(pattern,controllerName));
+        System.out.println(DocUtil.isMatch(pattern, controllerName));
+    }
+
+    @Test
+    public void  testFormatPathUrl() {
+        System.setProperty(DocGlobalConstants.DOC_LANGUAGE, DocLanguage.CHINESE.getCode());
+        String url = "http://localhost:8080/detail/{id:[a-zA-Z0-9]{3}}/{name:[a-zA-Z0-9]{3}}";
+        System.out.println(DocUtil.formatPathUrl(url));
     }
 }

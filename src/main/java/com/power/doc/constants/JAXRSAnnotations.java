@@ -4,12 +4,11 @@ package com.power.doc.constants;
  * JAX-RS Annotations
  *
  * @author Zxq
+ * @see JakartaJaxrsAnnotations
+ * @deprecated Java EE has been renamed to Jakarta EE, an upgrade is recommended.
  */
+@Deprecated
 public final class JAXRSAnnotations {
-
-    private JAXRSAnnotations() {
-        throw new IllegalStateException("Utility class");
-    }
 
     /**
      * JAX-RS@DefaultValue
@@ -38,23 +37,6 @@ public final class JAXRSAnnotations {
     /**
      * JAX-RS@GET
      */
-    public static final String GET = "GET";
-    /**
-     * JAX-RS@POST
-     */
-    public static final String POST = "POST";
-    /**
-     * JAX-RS@PUT
-     */
-    public static final String PUT = "PUT";
-    /**
-     * JAX-RS@DELETE
-     */
-    public static final String DELETE = "DELETE";
-
-    /**
-     * JAX-RS@GET
-     */
     public static final String JAX_GET_FULLY = "javax.ws.rs.GET";
     /**
      * JAX-RS@POST
@@ -69,8 +51,16 @@ public final class JAXRSAnnotations {
      */
     public static final String JAXB_DELETE_FULLY = "javax.ws.rs.DELETE";
     /**
-     * JAX-RS@RestPath
+     * JAX-RS@PATCH
      */
-    public static final String JAXB_REST_PATH_FULLY = "org.jboss.resteasy.reactive.RestPath";
+    public static final String JAXB_PATCH_FULLY = "javax.ws.rs.PATCH";
+    /**
+     * JAX-RS@HEAD
+     */
+    public static final String JAXB_HEAD_FULLY = "javax.ws.rs.HEAD";
+
+    private JAXRSAnnotations() {
+        throw new IllegalStateException("Utility class");
+    }
 
 }

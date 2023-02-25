@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,18 +22,17 @@
  */
 package com.power.doc.builder.rpc;
 
-import com.power.doc.builder.ProjectDocConfigBuilder;
-import com.power.doc.constants.FrameworkEnum;
-import com.power.doc.factory.BuildTemplateFactory;
+import java.util.List;
+
 import com.power.doc.helper.JavaProjectBuilderHelper;
 import com.power.doc.model.ApiConfig;
 import com.power.doc.model.rpc.RpcApiDoc;
-import com.power.doc.template.IDocBuildTemplate;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 
-import java.util.List;
-
-import static com.power.doc.constants.DocGlobalConstants.*;
+import static com.power.doc.constants.DocGlobalConstants.ERROR_CODE_LIST_ADOC;
+import static com.power.doc.constants.DocGlobalConstants.ERROR_CODE_LIST_ADOC_TPL;
+import static com.power.doc.constants.DocGlobalConstants.RPC_ALL_IN_ONE_ADOC_TPL;
+import static com.power.doc.constants.DocGlobalConstants.RPC_API_DOC_ADOC_TPL;
 
 /**
  * @author yu 2020/5/17.
@@ -61,20 +60,15 @@ public class RpcAdocBuilder {
      * @param javaProjectBuilder ProjectDocConfigBuilder
      */
     public static void buildApiDoc(ApiConfig config, JavaProjectBuilder javaProjectBuilder) {
-        config.setFramework(FrameworkEnum.DUBBO.getFramework());
         config.setAdoc(true);
-        config.setShowJavaType(true);
         RpcDocBuilderTemplate builderTemplate = new RpcDocBuilderTemplate();
-        builderTemplate.checkAndInit(config);
-        ProjectDocConfigBuilder configBuilder = new ProjectDocConfigBuilder(config, javaProjectBuilder);
-        IDocBuildTemplate docBuildTemplate = BuildTemplateFactory.getDocBuildTemplate(config.getFramework());
-        List<RpcApiDoc> apiDocList = docBuildTemplate.getApiData(configBuilder);
+        List<RpcApiDoc> apiDocList = builderTemplate.getRpcApiDoc(config, javaProjectBuilder);
         if (config.isAllInOne()) {
             String docName = builderTemplate.allInOneDocName(config, INDEX_DOC, ".adoc");
             builderTemplate.buildAllInOne(apiDocList, config, javaProjectBuilder, RPC_ALL_IN_ONE_ADOC_TPL, docName);
         } else {
             builderTemplate.buildApiDoc(apiDocList, config, RPC_API_DOC_ADOC_TPL, API_EXTENSION);
-            builderTemplate.buildErrorCodeDoc(config, ERROR_CODE_LIST_ADOC_TPL, ERROR_CODE_LIST_ADOC);
+            builderTemplate.buildErrorCodeDoc(config, ERROR_CODE_LIST_ADOC_TPL, ERROR_CODE_LIST_ADOC, javaProjectBuilder);
         }
     }
 

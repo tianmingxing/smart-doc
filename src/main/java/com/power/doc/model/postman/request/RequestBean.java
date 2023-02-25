@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,16 +22,17 @@
  */
 package com.power.doc.model.postman.request;
 
+import java.util.List;
+
 import com.power.doc.model.postman.UrlBean;
 import com.power.doc.model.postman.request.body.BodyBean;
 import com.power.doc.model.postman.request.header.HeaderBean;
-
-import java.util.List;
 
 /**
  * @author xingzi
  */
 public class RequestBean {
+
     private String method;
     private BodyBean body;
     private UrlBean url;

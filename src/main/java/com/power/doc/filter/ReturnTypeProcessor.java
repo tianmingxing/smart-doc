@@ -1,7 +1,7 @@
 /*
  * smart-doc https://github.com/shalousun/smart-doc
  *
- * Copyright (C) 2018-2022 smart-doc
+ * Copyright (C) 2018-2023 smart-doc
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,11 +22,11 @@
  */
 package com.power.doc.filter;
 
-import com.power.doc.model.ApiReturn;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import com.power.doc.model.ApiReturn;
 
 /**
  * @author yu 2020/4/17.
